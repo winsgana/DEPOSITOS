@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Envianos tu Comprobante</title>
+  <title>Envianos tu comprobante</title>
   <style>
     /* Estilos generales */
     body {
@@ -39,13 +39,19 @@
       margin-bottom: 10px;
       font-size: 16px;
       color: #333;
+      text-align: left;
     }
+    input[type="text"],
     input[type="file"] {
-      margin-bottom: 15px;
-      padding: 10px;
       width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      box-sizing: border-box;
+    }
+    input[type="text"]::placeholder {
+      color: #aaa;
     }
     #previewContainer {
       margin-bottom: 15px;
@@ -113,13 +119,20 @@
 
 <div class="container">
   <!-- Título e Instrucción -->
-  <h1>Envianos tu Comprobante</h1>
-  <p class="instruction">Por favor, selecciona el archivo que deseas enviar como comprobante de pago. Recuerda que solo se aceptan documentos PDF, JPG o PNG.-</p>
+  <h1>Envianos tu comprobante</h1>
+  <p class="instruction">Por favor, selecciona el archivo que deseas enviar como comprobante de pago. Recuerda que solo se aceptan documentos PDF, JPG o PNG.</p>
 
   <!-- Formulario -->
   <form id="uploadForm">
-    <label for="fileInput">Selecciona tu archivo:</label>
+    <label for="docNumber">Ingresa tu número de documento:</label>
+    <input type="text" id="docNumber" name="docNumber" maxlength="12" required placeholder="Ej: 123456789012">
+
+    <label for="monto">Monto que desea depositar:</label>
+    <input type="text" id="monto" name="monto" maxlength="4" required placeholder="Ej: 5000">
+
+    <label for="fileInput">Envianos tu comprovante:</label>
     <input type="file" id="fileInput" name="file" accept=".pdf, image/jpeg, image/png" required>
+
     <div id="previewContainer"></div>
     <button type="submit" class="submit-btn">Enviar Comprobante</button>
   </form>
@@ -165,13 +178,28 @@
   // Envío del formulario vía AJAX
   document.getElementById('uploadForm').addEventListener('submit', function(e) {
     e.preventDefault();
+
     const formData = new FormData();
     const file = fileInput.files[0];
-    if (!file) {
-      alert("Por favor, selecciona un archivo.");
+    const docNumber = document.getElementById('docNumber').value.trim();
+    let monto = document.getElementById('monto').value.trim();
+
+    if (!file || !docNumber || !monto) {
+      alert("Por favor, ingresa todos los campos y selecciona un archivo.");
       return;
     }
+
+    // Eliminar cualquier punto en el monto (en caso de re-edición)
+    monto = monto.replace(/\./g, '');
+
+    // Formatear el monto si tiene 4 dígitos (insertar punto de separación de miles)
+    if (monto.length === 4) {
+      monto = monto.slice(0,1) + '.' + monto.slice(1);
+    }
+
     formData.append('file', file);
+    formData.append('docNumber', docNumber);
+    formData.append('monto', monto);
 
     fetch('procesar.php', {
       method: 'POST',
@@ -179,16 +207,15 @@
     })
     .then(response => response.json())
     .then(data => {
-      // Se asume que la respuesta JSON tendrá una propiedad "message" en caso de éxito
       if (data.message && data.message.indexOf("✅") !== -1) {
         document.getElementById('successModal').style.display = 'block';
       } else {
-        alert("❌ " + (data.message || "Error al enviar el comprobante."));
+        alert("❌ " + (data.message || "Error al enviar el Comprobante."));
       }
     })
     .catch(error => {
       console.error(error);
-      alert("❌ Error al enviar el comprobante.");
+      alert("❌ Error al enviar el Comprobante.");
     });
   });
 
