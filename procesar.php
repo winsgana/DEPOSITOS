@@ -2,9 +2,9 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-// Configuración del bot de Telegram
+// Configuración del bot de Telegram para pagos al cliente (QR)
 $TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";  // Tu token de bot
-$CHAT_ID = "-4633546693";  // ID de tu grupo de Telegram
+$CHAT_ID = "-4633546693";  // Chat ID para pagos al cliente
 
 // Solo se aceptan solicitudes POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -27,20 +27,48 @@ if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
   exit;
 }
 
+// Verificar número de documento
+if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
+  http_response_code(400);
+  echo json_encode(["message" => "Número de documento es requerido"]);
+  exit;
+}
+$docNumber = substr(trim($_POST['docNumber']), 0, 12); // Limitar a 12 caracteres
+
+// Verificar y formatear el monto
+if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
+  http_response_code(400);
+  echo json_encode(["message" => "El monto es requerido"]);
+  exit;
+}
+// Eliminar cualquier carácter que no sea dígito (excepto el punto)
+$montoRaw = preg_replace('/[^\d]/', '', $_POST['monto']);
+
+// Formatear el monto si tiene más de 3 dígitos (para 4 dígitos se inserta punto)
+if (strlen($montoRaw) === 4) {
+  $montoFormatted = substr($montoRaw, 0, 1) . '.' . substr($montoRaw, 1);
+} else {
+  $montoFormatted = $montoRaw;
+}
+
 $nombreArchivo = $_FILES["file"]["name"];
 $rutaTemporal = $_FILES["file"]["tmp_name"];
 $fecha = date('Y-m-d H:i:s');  // Fecha y hora actual
 
 $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 
-// Preparar datos para enviar a Telegram
+// Preparar el mensaje que se enviará a Telegram
+$caption = "📎 Nuevo QR recibido:\n\n" .
+           "📝 Archivo: $nombreArchivo\n" .
+           "📅 Fecha de carga: $fecha\n" .
+           "🪪 Documento: $docNumber\n" .
+           "💰 Monto: $montoFormatted\n\n" .
+           "🔔 Por favor, Realizar el pago.";
+
 $postData = [
   "chat_id" => $CHAT_ID,
   "document" => new CURLFile($rutaTemporal, mime_content_type($rutaTemporal), $nombreArchivo),
-  "caption" => "📎 Nuevo comprobante recibido:\n\n" .
-                "📝 Archivo: $nombreArchivo\n" .
-                "📅 Fecha de carga: $fecha\n\n" .
-                "🔔 Por favor, verifica el pago."
+  "caption" => $caption
 ];
 
 $ch = curl_init();
@@ -66,5 +94,5 @@ if ($response === false || $http_status != 200) {
   exit;
 }
 
-echo json_encode(["message" => "✅ Comprobante enviado con éxito a Telegram"]);
+echo json_encode(["message" => "✅ QR enviado con éxito a Telegram"]);
 ?>
