@@ -119,9 +119,10 @@
 
 <div class="container">
   <!-- Título e Instrucción -->
-  <h1>Envianos tu comprobante</h1>
+  <img src="logo.png" alt="Logo" width="150">
+  <h1>ESCANEA Y PAGA!</h1>
   <img src="qr.png" alt="qr" width="300">
-  <p class="instruction">Por favor, selecciona el archivo que deseas enviar como comprobante de pago. Recuerda que solo se aceptan documentos PDF, JPG o PNG.</p>
+  <p class="instruction">Por favor, selecciona el comprobante de pago. Recuerda que solo se aceptan documentos PDF, JPG o PNG.</p>
 
   <!-- Formulario -->
   <form id="uploadForm">
@@ -131,7 +132,7 @@
     <label for="monto">Monto que desea depositar:</label>
     <input type="text" id="monto" name="monto" maxlength="4" required placeholder="Ej: 5000">
 
-    <label for="fileInput">Envianos tu comprovante:</label>
+    <label for="fileInput">Envianos tu comprobante de pago:</label>
     <input type="file" id="fileInput" name="file" accept=".pdf, image/jpeg, image/png" required>
 
     <div id="previewContainer"></div>
