@@ -75,7 +75,9 @@ $keyboard = json_encode([
 $postData = [
   "chat_id" => $CHAT_ID,
   "document" => new CURLFile($rutaTemporal, mime_content_type($rutaTemporal), $nombreArchivo),
-  "caption" => $caption
+  "caption" => $caption,
+  "parse_mode" => "Markdown",
+  "reply_markup" => $keyboard
 ];
 
 $ch = curl_init();
