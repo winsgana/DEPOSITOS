@@ -65,6 +65,13 @@ $caption = "📎 Nuevo QR recibido:\n\n" .
            "💰 Monto: $montoFormatted\n\n" .
            "🔔 Por favor, Realizar el pago.";
 
+$keyboard = json_encode([
+    "inline_keyboard" => [
+        [["text" => "✅ Completado", "callback_data" => "completado"]],
+        [["text" => "❌ Rechazado", "callback_data" => "rechazado"]]
+    ]
+]);
+
 $postData = [
   "chat_id" => $CHAT_ID,
   "document" => new CURLFile($rutaTemporal, mime_content_type($rutaTemporal), $nombreArchivo),
