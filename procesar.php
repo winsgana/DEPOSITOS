@@ -11,7 +11,7 @@ $TOKEN = getenv("TELEGRAM_BOT_TOKEN");
 $CHAT_ID = "-4633546693";  
 
 // Nueva URL de Google Apps Script
-$googleUrl = "https://script.googleusercontent.com/macros/echo?user_content_key=qaPEzf2Z64CZOtfmnCqIhQYGDE65upAkqBXRG08mTqwzQZosikWE4sY4tJrRZgzJlhgBfP2ysQXc-QPoFkBWKcDWq6dcX3UQm5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnCiJ30AydW5Qk_QcG_Rgqk_x74MCPOCvHOb00Jk_VR34hhpPyBlnYqcgH5lh0TXvmvTzE_hWhYeqr-535cS5sZFlE-84Fkfmlg&amp;lib=M0UffDhU98y8Gyc5cc6gUAXYhgBnRnQ1X";
+$googleUrl = "https://script.google.com/macros/s/AKfycbzJVOoHX3i8R1rj0KCuPJ5MM2aR3KIhEZGvnE-7NPPRGRdtKeQhOmgaB0aY5toKr0Yu/exec";
 
 // Solo se aceptan solicitudes POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
