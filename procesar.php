@@ -138,15 +138,11 @@ $options = [
 
 $context  = stream_context_create($options);
 $response = file_get_contents($googleUrl, false, $context);
-echo json_encode(["google_response" => $response], JSON_PRETTY_PRINT);
-exit;
 
-// Guardar respuesta en log
+// Guardar la respuesta en un log
 file_put_contents("google_sheets_log.txt", "Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
 
-
-// Terminar la ejecución del script normalmente
-echo json_encode(["message" => "✅ QR enviado con éxito a Telegram y Google Sheets"]);
+// Mostrar respuesta en pantalla para depuración
+echo json_encode(["google_response" => $response], JSON_PRETTY_PRINT);
 exit;
 ?>
-
