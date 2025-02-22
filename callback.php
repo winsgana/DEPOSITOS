@@ -49,7 +49,10 @@ file_put_contents("callback_log.txt", "Respuesta de Telegram: " . $response . "\
 
 if ($response === false) {
     file_put_contents("callback_log.txt", "Error: No se pudo actualizar el mensaje en Telegram.\n", FILE_APPEND);
-    exit;
+    echo json_encode([
+    "log_content" => file_exists("callback_log.txt") ? file_get_contents("callback_log.txt") : "No se encontró el archivo de log"
+], JSON_PRETTY_PRINT);
+exit;
 }
 
     // Actualizar el mensaje usando editMessageCaption (mensaje con documento)
