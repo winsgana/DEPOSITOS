@@ -66,15 +66,15 @@ $adminName = isset($_POST["usuario"]) ? $_POST["usuario"] : "Desconocido";
 file_put_contents("google_sheets_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
 
 // 📌 URL de Google Sheets
-$googleUrl = "https://script.google.com/macros/s/AKfycbwJjWXk2kWPc_wSVK5XTs5C3Fv6zWUAcvF7FGRDxTBglRcH-BZEPq1yyOaIr79zGodB/exec";
+$googleUrl = "https://docs.google.com/spreadsheets/d/1VQWZFwmZPYMkHSrjrUnhnKgzOzoXFBczNFulGZtL8hY/edit?gid=0#gid=0";
 
 // 📌 Si se recibe una actualización desde `callback.php`
 if (isset($_POST['usuario']) && isset($_POST['callback'])) {
     $adminName = $_POST["usuario"]; // Usuario que presionó el botón
     $estado = $_POST["callback"]; // "completado" o "rechazado"
-
-    // 📌 Ahora enviamos estos datos a Google Sheets
-    $googleUrl = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec"; // Reemplázalo con la URL de tu Apps Script
+  
+  // 📌 Ahora enviamos estos datos a Google Sheets
+    $googleUrl = "https://script.google.com/macros/s/AKfycbwJjWXk2kWPc_wSVK5XTs5C3Fv6zWUAcvF7FGRDxTBglRcH-BZEPq1yyOaIr79zGodB/exec"; // Reemplázalo con la URL de tu Apps Script
 
     $data = [
         "usuario" => $adminName,
