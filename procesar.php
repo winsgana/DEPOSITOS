@@ -120,5 +120,31 @@ if ($response === false || $http_status != 200) {
   exit;
 }
 
-echo json_encode(["message" => "✅ QR enviado con éxito a Telegram"]);
+$googleUrl = "URL_DEL_SCRIPT_AQUI"; // Reemplázalo con la URL de tu Apps Script
+
+$data = [
+    "usuario" => $adminName,
+    "documento" => $docNumber,
+    "monto" => $montoFormatted
+];
+
+$options = [
+    "http" => [
+        "header"  => "Content-type: application/x-www-form-urlencoded",
+        "method"  => "POST",
+        "content" => http_build_query($data)
+    ]
+];
+
+$context  = stream_context_create($options);
+$response = file_get_contents($googleUrl, false, $context);
+
+// Guardar respuesta en log
+file_put_contents("google_sheets_log.txt", "Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
+
+
+// Terminar la ejecución del script normalmente
+echo json_encode(["message" => "✅ QR enviado con éxito a Telegram y Google Sheets"]);
+exit;
 ?>
+
