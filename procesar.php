@@ -120,7 +120,7 @@ if ($response === false || $http_status != 200) {
   exit;
 }
 
-$googleUrl = "URL_DEL_SCRIPT_AQUI"; // Reemplázalo con la URL de tu Apps Script
+$googleUrl = "https://script.google.com/macros/s/AKfycbxIog9b1AGR-c7SQOXwYKkMCuk0bc1w-3CTdAi0kyUFHfefDKfxy90ttF1l7c0I2Ot5/exec"; // Reemplázalo con la URL de tu Apps Script
 
 $data = [
     "usuario" => $adminName,
