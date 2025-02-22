@@ -1,5 +1,5 @@
 <?php
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI"; // Token del bot
+$TOKEN = getenv("TELEGRAM_BOT_TOKEN"); // Token del bot
 
 // Capturar la entrada de Telegram
 $content = file_get_contents("php://input");
