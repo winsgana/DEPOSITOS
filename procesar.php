@@ -10,6 +10,9 @@ ini_set('display_errors', 1);
 $TOKEN = getenv("TELEGRAM_BOT_TOKEN");  
 $CHAT_ID = "-4633546693";  
 
+// Nueva URL de Google Apps Script
+$googleUrl = "https://script.google.com/macros/s/AKfycbwjW8KsLbMnGPyvEOZiZFFkh9o-0LjcBGHNe3k5Q1Q5inVogA2zO_R3demepP3XQCxW/exec";
+
 // Solo se aceptan solicitudes POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
   http_response_code(405);
@@ -22,13 +25,14 @@ if (isset($_POST['usuario']) && isset($_POST['callback'])) {
     $adminName = $_POST["usuario"];
     $estado = $_POST["callback"];
 
-    // 📌 URL de Google Apps Script (Reemplázala con la correcta)
-    $googleUrl = "https://script.google.com/macros/s/AKfycbwjW8KsLbMnGPyvEOZiZFFkh9o-0LjcBGHNe3k5Q1Q5inVogA2zO_R3demepP3XQCxW/exec";
-
+    // 📌 Datos a enviar a Google Sheets
     $data = [
         "usuario" => $adminName,
         "estado" => $estado
     ];
+
+    // 📌 Registrar en logs antes de enviar a Sheets
+    file_put_contents("google_sheets_log.txt", "📌 Datos a enviar a Google Sheets: " . json_encode($data) . "\n", FILE_APPEND);
 
     $options = [
         "http" => [
@@ -41,7 +45,9 @@ if (isset($_POST['usuario']) && isset($_POST['callback'])) {
     $context  = stream_context_create($options);
     $response = file_get_contents($googleUrl, false, $context);
 
-    file_put_contents("google_sheets_log.txt", "📌 Usuario actualizado en Google Sheets: " . $response . "\n", FILE_APPEND);
+    // 📌 Guardar la respuesta de Google Sheets en log
+    file_put_contents("google_sheets_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
+
     echo json_encode(["message" => "✅ Usuario registrado en Google Sheets"]);
     exit;
 }
@@ -89,6 +95,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 curl_close($ch);
 
+// 📌 Guardar respuesta de Telegram en log
 file_put_contents("telegram_error_log.txt", "📌 Respuesta de Telegram: " . $response . "\n", FILE_APPEND);
 
 echo json_encode(["message" => "✅ QR enviado con éxito a Telegram"]);
