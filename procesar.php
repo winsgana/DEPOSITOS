@@ -68,26 +68,36 @@ file_put_contents("google_sheets_log.txt", "Datos a enviar: Usuario=$adminName, 
 // 📌 URL de Google Sheets
 $googleUrl = "https://script.google.com/macros/s/AKfycbwy45iDMEOGL1gybIHXR9edTyxl9HJsI956RaNH4IqOUZEu5CSZzhoVJo-O5c5OdKEn/exec";
 
-// 📌 Enviar datos a Google Sheets
-$data = [
-    "usuario" => $adminName,
-    "documento" => $docNumber,
-    "monto" => $montoFormatted
-];
+// 📌 Si se recibe una actualización desde `callback.php`
+if (isset($_POST['usuario']) && isset($_POST['callback'])) {
+    $adminName = $_POST["usuario"]; // Usuario que presionó el botón
+    $estado = $_POST["callback"]; // "completado" o "rechazado"
 
-$options = [
-    "http" => [
-        "header"  => "Content-type: application/x-www-form-urlencoded",
-        "method"  => "POST",
-        "content" => http_build_query($data)
-    ]
-];
+    // 📌 Ahora enviamos estos datos a Google Sheets
+    $googleUrl = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec"; // Reemplázalo con la URL de tu Apps Script
 
-$context  = stream_context_create($options);
-$response = file_get_contents($googleUrl, false, $context);
+    $data = [
+        "usuario" => $adminName,
+        "estado" => $estado
+    ];
 
-// 📌 Guardar respuesta en un log
-file_put_contents("google_sheets_log.txt", "Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
+    $options = [
+        "http" => [
+            "header"  => "Content-type: application/x-www-form-urlencoded",
+            "method"  => "POST",
+            "content" => http_build_query($data)
+        ]
+    ];
+
+    $context  = stream_context_create($options);
+    $response = file_get_contents($googleUrl, false, $context);
+
+    // 📌 Guardar respuesta en un log
+    file_put_contents("google_sheets_log.txt", "📌 Usuario actualizado en Google Sheets: " . $response . "\n", FILE_APPEND);
+
+    echo json_encode(["message" => "✅ Usuario registrado en Google Sheets"]);
+    exit;
+}
 
 // 📌 URL de Telegram para enviar el documento
 $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
