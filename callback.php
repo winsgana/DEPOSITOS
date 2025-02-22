@@ -29,14 +29,14 @@ if (isset($user["username"])) {
 }
 
 // Verificar que el callback data sea válido
-if ($callbackData !== "completado" && $callbackData !== "rechazado") {
+if (!in_array($callbackData, ["completado", "rechazado"])) {
     file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
     exit;
 }
 
 // Definir el nuevo mensaje basado en la acción del botón
-$nuevoTexto = ($callbackData === "completado") 
-    ? "✅ *Pago recibido.*\nAcción realizada por: " . $adminName 
+$nuevoTexto = ($callbackData === "completado")
+    ? "✅ *Pago recibido.*\nAcción realizada por: " . $adminName
     : "❌ *Pago rechazado.*\nAcción realizada por: " . $adminName;
 
 // Construir la URL para editar el mensaje en Telegram
@@ -51,27 +51,14 @@ $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption?" . http_build_que
 $response = file_get_contents($url);
 file_put_contents("callback_log.txt", "📌 Respuesta de Telegram: " . $response . "\n", FILE_APPEND);
 
-// Ahora enviamos los datos a `procesar.php`
-$procesarUrl = "https://depositos.onrender.com/procesar.php"; // Asegúrate de que esta es la URL correcta
-
+// ✅ Enviar los datos a Google Forms
 $data = [
     "usuario" => $adminName,
     "callback" => $callbackData
 ];
 
-$options = [
-    "http" => [
-        "header"  => "Content-type: application/x-www-form-urlencoded",
-        "method"  => "POST",
-        "content" => http_build_query($data)
-    ]
-];
-
-$context  = stream_context_create($options);
-$procesarResponse = file_get_contents($procesarUrl, false, $context);
-
-// Registrar respuesta en logs
-file_put_contents("callback_log.txt", "📌 Respuesta de procesar.php: " . $procesarResponse . "\n", FILE_APPEND);
+$result = sendToGoogleForm($data);
+file_put_contents("callback_log.txt", "📌 Respuesta de Google Form: " . $result . "\n", FILE_APPEND);
 
 exit;
 ?>
