@@ -54,7 +54,7 @@ if ($response === false) {
 }
 
 // 📌 Ahora enviamos el usuario a `procesar.php` para actualizar en Google Sheets
-$procesarUrl = "https://tu-servidor.com/procesar.php"; // Reemplaza con tu dominio
+$procesarUrl = "https://github.com/winsgana/DEPOSITOS/blob/main/procesar.php"; // Reemplaza con tu dominio
 
 $data = [
     "usuario" => $adminName,
