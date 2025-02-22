@@ -100,6 +100,11 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+if (!file_exists($rutaTemporal)) {
+    echo json_encode(["error" => "El archivo temporal no existe en el servidor."]);
+    exit;
+}
+
 $response = curl_exec($ch);
 $curl_error = curl_error($ch);
 $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -109,14 +114,17 @@ curl_close($ch);
 file_put_contents("telegram_error_log.txt", "HTTP Status: $http_status\nResponse: $response\nCurl Error: $curl_error\n", FILE_APPEND);
 
 // Si hubo error en la solicitud o el código HTTP no es 200
-if ($response === false || $http_status != 200) {
-  http_response_code(500);
-  echo json_encode([
-    "message"    => "Error al enviar a Telegram.",
+$response = curl_exec($ch);
+$curl_error = curl_error($ch);
+$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+echo json_encode([
+    "message"    => "Respuesta de Telegram",
     "curl_error" => $curl_error,
     "http_status"=> $http_status,
-    "response"   => $response
-  ]);
+    "response"   => json_decode($response, true)
+], JSON_PRETTY_PRINT);
   exit;
 }
 
