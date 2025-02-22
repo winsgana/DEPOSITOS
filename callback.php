@@ -48,19 +48,16 @@ $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption?" . http_build_que
 $response = file_get_contents($url);
 file_put_contents("callback_log.txt", "📌 Respuesta de Telegram: " . $response . "\n", FILE_APPEND);
 
-// Si hubo error en la solicitud, guardarlo en el log
 if ($response === false) {
     file_put_contents("callback_log.txt", "❌ Error: No se pudo actualizar el mensaje en Telegram.\n", FILE_APPEND);
 }
 
 // 📌 Ahora enviamos el usuario a `procesar.php` para actualizar en Google Sheets
-$procesarUrl = "https://github.com/winsgana/DEPOSITOS/blob/main/procesar.php"; // Reemplaza con tu dominio
+$procesarUrl = "https://depositos.onrender.com/procesar.php"; // Usa la URL de tu servidor en Render
 
 $data = [
     "usuario" => $adminName,
-    "callback" => $callbackData, // "completado" o "rechazado"
-    "chat_id" => $chatId,
-    "message_id" => $messageId
+    "callback" => $callbackData // "completado" o "rechazado"
 ];
 
 $options = [
