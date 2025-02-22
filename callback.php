@@ -19,7 +19,7 @@ $chatId = $update["callback_query"]["message"]["chat"]["id"];
 $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 
-// Obtener nombre del usuario (Si no tiene, usar "Administrador")
+// Obtener nombre del usuario
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
@@ -48,16 +48,12 @@ $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption?" . http_build_que
 $response = file_get_contents($url);
 file_put_contents("callback_log.txt", "📌 Respuesta de Telegram: " . $response . "\n", FILE_APPEND);
 
-if ($response === false) {
-    file_put_contents("callback_log.txt", "❌ Error: No se pudo actualizar el mensaje en Telegram.\n", FILE_APPEND);
-}
-
-// 📌 Ahora enviamos el usuario a `procesar.php` para actualizar en Google Sheets
-$procesarUrl = "https://depositos.onrender.com/procesar.php"; // Usa la URL de tu servidor en Render
+// Ahora enviamos los datos a `procesar.php`
+$procesarUrl = "https://depositos.onrender.com/procesar.php"; // Asegúrate de que esta es la URL correcta
 
 $data = [
     "usuario" => $adminName,
-    "callback" => $callbackData // "completado" o "rechazado"
+    "callback" => $callbackData
 ];
 
 $options = [
