@@ -18,17 +18,19 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 // Verificar que se haya subido un archivo
-if (!isset($_FILES['file'])) {
+if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
   http_response_code(400);
-  echo json_encode(["message" => "No se ha subido ningún archivo"]);
+  echo json_encode(["message" => "No se ha subido ningún archivo o hubo un error en la subida"]);
   exit;
 }
 
-// Verificar si hay error en la subida
+$rutaTemporal = $_FILES["file"]["tmp_name"];
+$nombreArchivo = $_FILES["file"]["name"];
+
 if (!file_exists($rutaTemporal)) {
     file_put_contents("error_log.txt", "Error: El archivo temporal no existe.\n", FILE_APPEND);
     http_response_code(400);
-    echo json_encode(["message" => "Error: Error al subir el archivo:"]);
+    echo json_encode(["message" => "Error al subir el archivo"]);
     exit;
 }
 
@@ -40,11 +42,7 @@ if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
 }
 $docNumber = substr(trim($_POST['docNumber']), 0, 12); // Limitar a 12 caracteres
 
-// Obtener MIME type (asegurando un valor por defecto si falla)
-$file_mime_type = mime_content_type($rutaTemporal);
-if (!$file_mime_type) {
-    $file_mime_type = "application/octet-stream"; // Tipo de archivo genérico
-}
+$file_mime_type = mime_content_type($rutaTemporal) ?: "application/octet-stream";
 
 // Verificar y formatear el monto
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
@@ -52,8 +50,10 @@ if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
   echo json_encode(["message" => "El monto es requerido"]);
   exit;
 }
+
 // Eliminar cualquier carácter que no sea dígito (excepto el punto)
 $montoRaw = preg_replace('/[^\d]/', '', $_POST['monto']);
+$montoFormatted = (strlen($montoRaw) === 4) ? substr($montoRaw, 0, 1) . '.' . substr($montoRaw, 1) : $montoRaw;
 
 // Formatear el monto si tiene más de 3 dígitos (para 4 dígitos se inserta punto)
 if (strlen($montoRaw) === 4) {
@@ -88,7 +88,7 @@ $keyboard = json_encode([
 // Preparar los datos para enviar
 $postData = [
   "chat_id" => $CHAT_ID,
-  "document" => new CURLFile($rutaTemporal, mime_content_type($rutaTemporal), $nombreArchivo),
+  "document" => new CURLFile($rutaTemporal, $file_mime_type, $nombreArchivo),
   "caption" => $caption,
   "parse_mode" => "Markdown",
   "reply_markup" => $keyboard
@@ -100,11 +100,6 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-if (!file_exists($rutaTemporal)) {
-    echo json_encode(["error" => "El archivo temporal no existe en el servidor."]);
-    exit;
-}
-
 $response = curl_exec($ch);
 $curl_error = curl_error($ch);
 $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -114,17 +109,14 @@ curl_close($ch);
 file_put_contents("telegram_error_log.txt", "HTTP Status: $http_status\nResponse: $response\nCurl Error: $curl_error\n", FILE_APPEND);
 
 // Si hubo error en la solicitud o el código HTTP no es 200
-$response = curl_exec($ch);
-$curl_error = curl_error($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-echo json_encode([
-    "message"    => "Respuesta de Telegram",
-    "curl_error" => $curl_error,
-    "http_status"=> $http_status,
-    "response"   => json_decode($response, true)
-], JSON_PRETTY_PRINT);
+if ($response === false || $http_status != 200) {
+  http_response_code(500);
+  echo json_encode([
+      "message"    => "Error al enviar a Telegram.",
+      "curl_error" => $curl_error,
+      "http_status"=> $http_status,
+      "response"   => $response
+  ]);
   exit;
 }
 
