@@ -7,8 +7,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Configuración del bot de Telegram para pagos al cliente (QR)
-$TOKEN = getenv("TELEGRAM_BOT_TOKEN");  // Tu token de bot
-$CHAT_ID = "-4633546693";  // Chat ID para pagos al cliente
+$TOKEN = getenv("TELEGRAM_BOT_TOKEN");  
+$CHAT_ID = "-4633546693";  
 
 // Solo se aceptan solicitudes POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -17,64 +17,13 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
   exit;
 }
 
-// Verificar que se haya subido un archivo
-if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-  file_put_contents("error_log.txt", "❌ Error: No se ha subido ningún archivo o hubo un error en la subida.\n", FILE_APPEND);
-  http_response_code(400);
-  echo json_encode(["message" => "❌ No se ha subido ningún archivo."]);
-  exit;
-}
-
-$rutaTemporal = $_FILES["file"]["tmp_name"];
-$nombreArchivo = $_FILES["file"]["name"];
-
-// Verificar si el archivo realmente existe
-if (!file_exists($rutaTemporal)) {
-    file_put_contents("error_log.txt", "❌ Error: El archivo temporal no existe.\n", FILE_APPEND);
-    http_response_code(400);
-    echo json_encode(["message" => "❌ Error al subir el archivo."]);
-    exit;
-}
-
-// Verificar número de documento
-if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
-  http_response_code(400);
-  echo json_encode(["message" => "❌ Número de documento es requerido."]);
-  exit;
-}
-$docNumber = substr(trim($_POST['docNumber']), 0, 12); // Limitar a 12 caracteres
-
-$file_mime_type = mime_content_type($rutaTemporal) ?: "application/octet-stream";
-
-// Verificar y formatear el monto
-if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
-  http_response_code(400);
-  echo json_encode(["message" => "❌ El monto es requerido."]);
-  exit;
-}
-
-// Formatear monto
-$montoRaw = preg_replace('/[^\d]/', '', $_POST['monto']);
-$montoFormatted = (strlen($montoRaw) === 4) ? substr($montoRaw, 0, 1) . '.' . substr($montoRaw, 1) : $montoRaw;
-
-$fecha = date('Y-m-d H:i:s');  // Fecha y hora actual
-
-// ✅ Obtener usuario correctamente
-$adminName = isset($_POST["usuario"]) ? $_POST["usuario"] : "Desconocido";
-
-// ✅ Verificar datos antes de enviar a Google Sheets
-file_put_contents("google_sheets_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
-
-// 📌 URL de Google Sheets
-$googleUrl = "https://docs.google.com/spreadsheets/d/1VQWZFwmZPYMkHSrjrUnhnKgzOzoXFBczNFulGZtL8hY/edit?gid=0#gid=0";
-
-// 📌 Si se recibe una actualización desde `callback.php`
+// 📌 Verificar si se recibe una solicitud desde `callback.php`
 if (isset($_POST['usuario']) && isset($_POST['callback'])) {
-    $adminName = $_POST["usuario"]; // Usuario que presionó el botón
-    $estado = $_POST["callback"]; // "completado" o "rechazado"
-  
-  // 📌 Ahora enviamos estos datos a Google Sheets
-    $googleUrl = "https://script.google.com/macros/s/AKfycbwJjWXk2kWPc_wSVK5XTs5C3Fv6zWUAcvF7FGRDxTBglRcH-BZEPq1yyOaIr79zGodB/exec"; // Reemplázalo con la URL de tu Apps Script
+    $adminName = $_POST["usuario"];
+    $estado = $_POST["callback"];
+
+    // 📌 URL de Google Apps Script (Reemplázala con la correcta)
+    $googleUrl = "https://script.google.com/macros/s/AKfycbwJjWXk2kWPc_wSVK5XTs5C3Fv6zWUAcvF7FGRDxTBglRcH-BZEPq1yyOaIr79zGodB/exec";
 
     $data = [
         "usuario" => $adminName,
@@ -92,25 +41,30 @@ if (isset($_POST['usuario']) && isset($_POST['callback'])) {
     $context  = stream_context_create($options);
     $response = file_get_contents($googleUrl, false, $context);
 
-    // 📌 Guardar respuesta en un log
     file_put_contents("google_sheets_log.txt", "📌 Usuario actualizado en Google Sheets: " . $response . "\n", FILE_APPEND);
-
     echo json_encode(["message" => "✅ Usuario registrado en Google Sheets"]);
     exit;
 }
 
+// 📌 Si no es un callback, significa que es una solicitud desde el cliente (archivo QR)
+if (!isset($_FILES['file'])) {
+  http_response_code(400);
+  echo json_encode(["message" => "❌ No se ha subido ningún archivo."]);
+  exit;
+}
+
+$rutaTemporal = $_FILES["file"]["tmp_name"];
+$nombreArchivo = $_FILES["file"]["name"];
+$fecha = date('Y-m-d H:i:s');  
+
 // 📌 URL de Telegram para enviar el documento
 $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 
-// 📌 Preparar mensaje para Telegram
 $caption = "📎 Nuevo QR recibido:\n\n" .
            "📝 Archivo: $nombreArchivo\n" .
-           "📅 Fecha de carga: $fecha\n" .
-           "🪪 Documento: $docNumber\n" .
-           "💰 Monto: $montoFormatted\n\n" .
+           "📅 Fecha de carga: $fecha\n\n" .
            "🔔 Por favor, Realizar el pago.";
 
-// 📌 Inline keyboard (botones)
 $keyboard = json_encode([
     "inline_keyboard" => [
         [["text" => "✅ Completado", "callback_data" => "completado"]],
@@ -118,10 +72,9 @@ $keyboard = json_encode([
     ]
 ]);
 
-// 📌 Datos para enviar a Telegram
 $postData = [
   "chat_id" => $CHAT_ID,
-  "document" => new CURLFile($rutaTemporal, $file_mime_type, $nombreArchivo),
+  "document" => new CURLFile($rutaTemporal, mime_content_type($rutaTemporal), $nombreArchivo),
   "caption" => $caption,
   "parse_mode" => "Markdown",
   "reply_markup" => $keyboard
@@ -134,26 +87,10 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 $response = curl_exec($ch);
-$curl_error = curl_error($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-// 📌 Guardar respuesta de Telegram en log
-file_put_contents("telegram_error_log.txt", "HTTP Status: $http_status\nResponse: $response\nCurl Error: $curl_error\n", FILE_APPEND);
+file_put_contents("telegram_error_log.txt", "📌 Respuesta de Telegram: " . $response . "\n", FILE_APPEND);
 
-// 📌 Verificar si hubo error en la solicitud a Telegram
-if ($response === false || $http_status != 200) {
-  http_response_code(500);
-  echo json_encode([
-      "message"    => "❌ Error al enviar a Telegram.",
-      "curl_error" => $curl_error,
-      "http_status"=> $http_status,
-      "response"   => $response
-  ]);
-  exit;
-}
-
-// ✅ Si todo fue exitoso
-echo json_encode(["message" => "✅ QR enviado con éxito a Telegram y Google Sheets"]);
+echo json_encode(["message" => "✅ QR enviado con éxito a Telegram"]);
 exit;
 ?>
