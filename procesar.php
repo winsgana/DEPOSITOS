@@ -66,7 +66,7 @@ $adminName = isset($_POST["usuario"]) ? $_POST["usuario"] : "Desconocido";
 file_put_contents("google_sheets_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
 
 // 📌 URL de Google Sheets
-$googleUrl = "https://script.google.com/macros/s/AKfycbwy45iDMEOGL1gybIHXR9edTyxl9HJsI956RaNH4IqOUZEu5CSZzhoVJo-O5c5OdKEn/exec";
+$googleUrl = "https://script.google.com/macros/s/AKfycbwJjWXk2kWPc_wSVK5XTs5C3Fv6zWUAcvF7FGRDxTBglRcH-BZEPq1yyOaIr79zGodB/exec";
 
 // 📌 Si se recibe una actualización desde `callback.php`
 if (isset($_POST['usuario']) && isset($_POST['callback'])) {
