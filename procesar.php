@@ -63,7 +63,7 @@ $fecha = date('Y-m-d H:i:s');  // Fecha y hora actual
 $adminName = isset($_POST["usuario"]) ? $_POST["usuario"] : "Desconocido";
 
 // ✅ Verificar datos antes de enviar a Google Sheets
-file_put_contents("google_sheets_log.txt", "Datos a enviar: Usuario=$adminName, Documento=$docNumber, Monto=$montoFormatted\n", FILE_APPEND);
+file_put_contents("google_sheets_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
 
 // 📌 URL de Google Sheets
 $googleUrl = "https://script.google.com/macros/s/AKfycbwy45iDMEOGL1gybIHXR9edTyxl9HJsI956RaNH4IqOUZEu5CSZzhoVJo-O5c5OdKEn/exec";
