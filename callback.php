@@ -1,44 +1,56 @@
 <?php
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";
+$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI"; // Token del bot
 
 // Capturar la entrada de Telegram
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
-if (!$content || !$update) {
-    file_put_contents("log.txt", "// Error: No se recibió contenido válido o la decodificación falló.\n", FILE_APPEND);
+// Registrar la entrada para depuración
+file_put_contents("callback_log.txt", "Callback recibido: " . json_encode($update, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+
+if (!$update || !isset($update["callback_query"])) {
+    file_put_contents("callback_log.txt", "Error: No hay callback_query en la solicitud.\n", FILE_APPEND);
     exit;
 }
 
-// Registrar para depuración (opcional)
-file_put_contents("log.txt", "// Datos recibidos:\n" . json_encode($update, JSON_PRETTY_PRINT), FILE_APPEND);
+// Extraer datos del callback
+$callbackData = $update["callback_query"]["data"];
+$chatId = $update["callback_query"]["message"]["chat"]["id"];
+$messageId = $update["callback_query"]["message"]["message_id"];
+$user = $update["callback_query"]["from"];
 
-// Verificar si es una callback query
-if (isset($update["callback_query"])) {
-    // Extraer información del administrador que hizo clic
-    $admin_info = $update["callback_query"]["from"];
-    $admin_name = isset($admin_info["first_name"]) ? $admin_info["first_name"] : "Administrador";
-    
-    if (isset($admin_info["username"])) {
-        $admin_name .= " (@" . $admin_info["username"] . ")";
-    }
+// Obtener nombre del usuario
+$adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
+if (isset($user["username"])) {
+    $adminName .= " (@" . $user["username"] . ")";
+}
 
-    // Obtener información del mensaje
-    $chat_id = $update["callback_query"]["message"]["chat"]["id"];
-    $message_id = $update["callback_query"]["message"]["message_id"];
-    $data = $update["callback_query"]["data"];  // Botón presionado
+// Definir el nuevo mensaje basado en la acción del botón
+if ($callbackData == "completado") {
+    $nuevoTexto = "✅ *Pago recibido.*\nAcción realizada por: " . $adminName;
+} elseif ($callbackData == "rechazado") {
+    $nuevoTexto = "❌ *Pago rechazado.*\nAcción realizada por: " . $adminName;
+} else {
+    file_put_contents("callback_log.txt", "Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
+    exit;
+}
 
-    // Validar datos de la consulta
-    if (!in_array($data, ["completado", "rechazado"])) {
-        file_put_contents("log.txt", "// Error: Callback data no válida.\n", FILE_APPEND);
-        exit;
-    }
+   // Construir la URL para editar el mensaje en Telegram
+$url = "https://api.telegram.org/bot$TOKEN/editMessageCaption?" . http_build_query([
+    "chat_id"    => $chatId,
+    "message_id" => $messageId,
+    "caption"    => $nuevoTexto,
+    "parse_mode" => "Markdown"
+]);
 
-    // Definir el nuevo mensaje según el botón presionado e incluir el nombre del administrador
-    $nuevo_texto = ($data == "completado") ? 
-        "✅ *Pago recibido.*\nAcción realizada por: " . $admin_name : 
-        "❌ *Pago rechazado.*\nAcción realizada por: " . $admin_name;
-    }
+// Enviar la solicitud a Telegram
+$response = file_get_contents($url);
+file_put_contents("callback_log.txt", "Respuesta de Telegram: " . $response . "\n", FILE_APPEND);
+
+if ($response === false) {
+    file_put_contents("callback_log.txt", "Error: No se pudo actualizar el mensaje en Telegram.\n", FILE_APPEND);
+    exit;
+}
 
     // Actualizar el mensaje usando editMessageCaption (mensaje con documento)
     $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption?chat_id=$chat_id&message_id=$message_id&caption=" . urlencode($nuevo_texto) . "&parse_mode=Markdown";
