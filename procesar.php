@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Configuración del bot de Telegram para pagos al cliente (QR)
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";  // Tu token de bot
+$TOKEN = getenv("TELEGRAM_BOT_TOKEN");  // Tu token de bot
 $CHAT_ID = "-4633546693";  // Chat ID para pagos al cliente
 
 // Solo se aceptan solicitudes POST
