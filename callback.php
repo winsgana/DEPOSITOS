@@ -49,14 +49,11 @@ file_put_contents("callback_log.txt", "Respuesta de Telegram: " . $response . "\
 
 if ($response === false) {
     file_put_contents("callback_log.txt", "Error: No se pudo actualizar el mensaje en Telegram.\n", FILE_APPEND);
-    echo json_encode([
+}
+
+// Mostrar el contenido del log en la respuesta para depuración
+echo json_encode([
     "log_content" => file_exists("callback_log.txt") ? file_get_contents("callback_log.txt") : "No se encontró el archivo de log"
 ], JSON_PRETTY_PRINT);
 exit;
-}
-
-    // Actualizar el mensaje usando editMessageCaption (mensaje con documento)
-    $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption?chat_id=$chat_id&message_id=$message_id&caption=" . urlencode($nuevo_texto) . "&parse_mode=Markdown";
-    file_get_contents($url);
-}
 ?>
