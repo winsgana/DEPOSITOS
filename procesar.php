@@ -122,8 +122,8 @@ if ($response === false || $http_status != 200) {
 
 $googleUrl = "https://script.google.com/macros/s/AKfycbwy45iDMEOGL1gybIHXR9edTyxl9HJsI956RaNH4IqOUZEu5CSZzhoVJo-O5c5OdKEn/exec"; // Reemplázalo con la URL de tu Apps Script
 
-// Verificar qué datos están llegando al script antes de continuar
-file_put_contents("google_sheets_log.txt", "Datos recibidos: " . json_encode($_POST) . "\n", FILE_APPEND);
+// Verificar qué datos llegan en POST
+file_put_contents("google_sheets_log.txt", "POST recibido: " . json_encode($_POST) . "\n", FILE_APPEND);
 
 // Asegurar que el usuario está definido correctamente
 $adminName = isset($_POST["usuario"]) ? $_POST["usuario"] : "Desconocido";
