@@ -23,6 +23,10 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 // 📌 Registrar los datos recibidos antes de procesarlos
 file_put_contents("google_sheets_log.txt", "📌 Datos recibidos en procesar.php: " . json_encode($_POST) . "\n", FILE_APPEND);
 
+// 📌 Verificar si hay respuesta de Google Sheets
+$response = file_get_contents($googleUrl, false, $context);
+file_put_contents("google_sheets_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
+
 // 📌 Verificar si se recibe una solicitud desde `callback.php`
 if (isset($_POST['usuario']) && isset($_POST['callback'])) {
     $adminName = $_POST["usuario"];
