@@ -23,7 +23,7 @@ if (isset($_POST['usuario']) && isset($_POST['callback'])) {
     $estado = $_POST["callback"];
 
     // 📌 URL de Google Apps Script (Reemplázala con la correcta)
-    $googleUrl = "https://script.google.com/macros/s/AKfycbzzhL8f78WtVzq4aaVscOlXxLDZgNT-Im_KuGzcRC4k74xCuwGdH9tYQSnuyBGZZY62/exec";
+    $googleUrl = "https://script.google.com/macros/s/AKfycbwjW8KsLbMnGPyvEOZiZFFkh9o-0LjcBGHNe3k5Q1Q5inVogA2zO_R3demepP3XQCxW/exec";
 
     $data = [
         "usuario" => $adminName,
