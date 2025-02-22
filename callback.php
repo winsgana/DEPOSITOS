@@ -1,6 +1,9 @@
 <?php
 $TOKEN = getenv("TELEGRAM_BOT_TOKEN"); // Token del bot
 
+// ✅ Incluir el archivo send_to_google_form.php
+include_once 'send_to_google_form.php';
+
 // Capturar la entrada de Telegram
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
