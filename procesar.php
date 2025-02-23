@@ -1,7 +1,7 @@
 <?php
 // ✅ Recibir datos del cliente y procesarlos para Telegram y Google Sheets
-$TOKEN = getenv("7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI");
-$CHAT_ID = getenv("-4633546693");
+$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";
+$CHAT_ID = "-4633546693";
 
 // Verificar si los datos llegan correctamente desde el formulario
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
