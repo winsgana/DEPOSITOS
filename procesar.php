@@ -8,21 +8,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $documento = $_POST["documento"] ?? "No especificado";
     $monto = $_POST["monto"] ?? "No especificado";
     $fecha = date("Y-m-d H:i:s");
+    $imagen = $_FILES["imagen"]["tmp_name"] ?? null;
 
-    // ✅ Enviar datos a Telegram
-    $mensaje = "📌 Nuevo depósito recibido:\n📜 Documento: $documento\n💰 Monto: $monto\n📆 Fecha: $fecha\n\n⚠️ Por favor, validar el pago.";
-    $bot_url = "https://api.telegram.org/bot$TOKEN/sendMessage";
-    
-    $telegram_data = [
-        "chat_id" => $CHAT_ID,
-        "text" => $mensaje,
-        "reply_markup" => json_encode([
-            "inline_keyboard" => [[
-                ["text" => "✅ Completado", "callback_data" => "completado"],
-                ["text" => "❌ Rechazado", "callback_data" => "rechazado"]
-            ]]
-        ])
-    ];
+    // ✅ Enviar imagen y datos a Telegram
+    if ($imagen) {
+        $bot_url = "https://api.telegram.org/bot$TOKEN/sendPhoto";
+
+        $telegram_data = [
+            "chat_id" => $CHAT_ID,
+            "caption" => "📌 Nuevo depósito recibido:\n📜 Documento: $documento\n💰 Monto: $monto\n📆 Fecha: $fecha\n\n⚠️ Por favor, validar el pago.",
+            "reply_markup" => json_encode([
+                "inline_keyboard" => [[
+                    ["text" => "✅ Completado", "callback_data" => "completado"],
+                    ["text" => "❌ Rechazado", "callback_data" => "rechazado"]
+                ]]
+            ])
+        ];
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $bot_url,
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POSTFIELDS => [
+                'chat_id' => $CHAT_ID,
+                'photo' => new CURLFile($imagen),
+                'caption' => $telegram_data['caption'],
+                'reply_markup' => $telegram_data['reply_markup']
+            ]
+        ]);
+        curl_exec($curl);
+        curl_close($curl);
+    }
     
     file_get_contents($bot_url . "?" . http_build_query($telegram_data));
 
