@@ -10,21 +10,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $fecha = date("Y-m-d H:i:s");
     $imagen = $_FILES["imagen"]["tmp_name"] ?? null;
 
-    // ✅ Enviar imagen y datos a Telegram
+     // ✅ Enviar imagen y datos a Telegram
+    $bot_url = $imagen ? "https://api.telegram.org/bot$TOKEN/sendPhoto" : "https://api.telegram.org/bot$TOKEN/sendMessage";
+
+    $telegram_data = [
+        "chat_id" => $CHAT_ID,
+        "caption" => "📌 Nuevo depósito recibido:\n📜 Documento: $documento\n💰 Monto: $monto\n📆 Fecha: $fecha\n\n⚠️ Por favor, validar el pago.",
+        "reply_markup" => json_encode([
+            "inline_keyboard" => [[
+                ["text" => "✅ Completado", "callback_data" => "completado"],
+                ["text" => "❌ Rechazado", "callback_data" => "rechazado"]
+            ]]
+        ])
+    ];
+
     if ($imagen) {
-        $bot_url = "https://api.telegram.org/bot$TOKEN/sendPhoto";
-
-        $telegram_data = [
-            "chat_id" => $CHAT_ID,
-            "caption" => "📌 Nuevo depósito recibido:\n📜 Documento: $documento\n💰 Monto: $monto\n📆 Fecha: $fecha\n\n⚠️ Por favor, validar el pago.",
-            "reply_markup" => json_encode([
-                "inline_keyboard" => [[
-                    ["text" => "✅ Completado", "callback_data" => "completado"],
-                    ["text" => "❌ Rechazado", "callback_data" => "rechazado"]
-                ]]
-            ])
-        ];
-
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => $bot_url,
@@ -39,9 +39,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         ]);
         curl_exec($curl);
         curl_close($curl);
+    } else {
+        file_get_contents($bot_url . "?" . http_build_query($telegram_data));
     }
-    
-    file_get_contents($bot_url . "?" . http_build_query($telegram_data));
 
     // ✅ Enviar datos a Google Sheets
     function sendToGoogleSheets($documento, $monto, $fecha) {
