@@ -1,41 +1,59 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
+// ✅ Recibir datos del cliente y procesarlos para Telegram y Google Sheets
+$TOKEN = getenv("7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI");
+$CHAT_ID = getenv("-4633546693");
 
-// ✅ Incluir el archivo send_to_google_form.php
-include_once 'send_to_google_form.php';
+// Verificar si los datos llegan correctamente desde el formulario
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $documento = $_POST["documento"] ?? "No especificado";
+    $monto = $_POST["monto"] ?? "No especificado";
+    $fecha = date("Y-m-d H:i:s");
 
-// Habilitar logs de error para depuración
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+    // ✅ Enviar datos a Telegram
+    $mensaje = "📌 Nuevo depósito recibido:\n📜 Documento: $documento\n💰 Monto: $monto\n📆 Fecha: $fecha\n\n⚠️ Por favor, validar el pago.";
+    $bot_url = "https://api.telegram.org/bot$TOKEN/sendMessage";
+    
+    $telegram_data = [
+        "chat_id" => $CHAT_ID,
+        "text" => $mensaje,
+        "reply_markup" => json_encode([
+            "inline_keyboard" => [[
+                ["text" => "✅ Completado", "callback_data" => "completado"],
+                ["text" => "❌ Rechazado", "callback_data" => "rechazado"]
+            ]]
+        ])
+    ];
+    
+    file_get_contents($bot_url . "?" . http_build_query($telegram_data));
 
-// 📌 Capturar los datos enviados desde Telegram
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
+    // ✅ Enviar datos a Google Sheets
+    function sendToGoogleSheets($documento, $monto, $fecha) {
+        $url = "https://script.google.com/macros/s/AKfycbxd_HaacOaXDZA6IoLe4LSl97a0RWPphonN_49r99vq2ftYQ7wLGyGecT3lH20ZbJslnw/exec";
+        
+        $postData = json_encode([
+            "documento" => $documento,
+            "monto" => $monto,
+            "usuario" => "Cliente", // Se registra como cliente
+            "estado" => "Pendiente"
+        ]);
+        
+        $options = [
+            "http" => [
+                "header"  => "Content-Type: application/json",
+                "method"  => "POST",
+                "content" => $postData,
+            ],
+        ];
 
-// Verificar que los datos sean válidos
-if (!$data || !isset($data['usuario']) || !isset($data['callback'])) {
-    file_put_contents("procesar_log.txt", "❌ Error: Datos incompletos recibidos.\n", FILE_APPEND);
-    echo json_encode(["message" => "❌ Datos incompletos."]);
-    exit;
+        $context  = stream_context_create($options);
+        file_get_contents($url, false, $context);
+    }
+
+    // Enviar datos a Google Sheets
+    sendToGoogleSheets($documento, $monto, $fecha);
+
+    echo json_encode(["status" => "success", "message" => "Datos enviados correctamente."]);
+} else {
+    echo json_encode(["status" => "error", "message" => "Método no permitido."]);
 }
-
-// Obtener la fecha actual
-$fecha = date("Y-m-d H:i:s");
-
-// Preparar los datos para actualizar en Google Forms
-$formData = [
-    "usuario" => $data['usuario'], // Nombre del usuario que realizó la acción en Telegram
-    "estado" => ($data['callback'] === "completado") ? "✅ Completado" : "❌ Rechazado",
-    "fecha" => $fecha
-];
-
-// ✅ Enviar datos al formulario de Google
-$result = sendToGoogleForm($formData);
-
-// Registrar respuesta en logs
-file_put_contents("procesar_log.txt", "📌 Respuesta de Google Form: " . $result . "\n", FILE_APPEND);
-
-echo json_encode(["message" => "✅ Estado actualizado correctamente en Google Forms."]);
-exit;
 ?>
