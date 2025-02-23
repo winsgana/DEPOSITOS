@@ -1,6 +1,6 @@
 <?php
 // ✅ Recibir el callback de Telegram y enviar a Google Sheets
-$TOKEN = getenv("TELEGRAM_BOT_TOKEN");
+$TOKEN = getenv("7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI");
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
