@@ -105,7 +105,3 @@ if ($response === false || $http_status != 200) {
 
 echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram"]);
 ?>
-// ✅ **Si todo fue exitoso**
-echo json_encode(["message" => "✅ QR enviado con éxito a Telegram y Google Sheets"]);
-exit;
-?>
