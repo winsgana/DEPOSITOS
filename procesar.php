@@ -1,76 +1,157 @@
 <?php
-// ✅ Recibir datos del cliente y procesarlos para Telegram y Google Sheets
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";
-$CHAT_ID = "-4633546693";
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json");
 
-// Verificar si los datos llegan correctamente desde el formulario
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $documento = $_POST["documento"] ?? "No especificado";
-    $monto = $_POST["monto"] ?? "No especificado";
-    $fecha = date("Y-m-d H:i:s");
-    $imagen = $_FILES["imagen"]["tmp_name"] ?? null;
+// Habilitar logs de error para depuración
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-     // ✅ Enviar imagen y datos a Telegram
-    $bot_url = $imagen ? "https://api.telegram.org/bot$TOKEN/sendPhoto" : "https://api.telegram.org/bot$TOKEN/sendMessage";
+// 📌 Configuración del bot de Telegram para pagos
+$TOKEN = getenv("7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI");
+$CHAT_ID = "-4633546693";  // Reemplázalo con tu Chat ID
 
-    $telegram_data = [
-        "chat_id" => $CHAT_ID,
-        "caption" => "📌 Nuevo depósito recibido:\n📜 Documento: $documento\n💰 Monto: $monto\n📆 Fecha: $fecha\n\n⚠️ Por favor, validar el pago.",
-        "reply_markup" => json_encode([
-            "inline_keyboard" => [[
-                ["text" => "✅ Completado", "callback_data" => "completado"],
-                ["text" => "❌ Rechazado", "callback_data" => "rechazado"]
-            ]]
-        ])
+// 📌 Solo se aceptan solicitudes POST
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+    echo json_encode(["message" => "❌ Método no permitido"]);
+    exit;
+}
+
+// 📌 Verificar que se haya subido un archivo
+if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+    http_response_code(400);
+    echo json_encode(["message" => "❌ No se ha subido ningún archivo"]);
+    exit;
+}
+
+$rutaTemporal = $_FILES["file"]["tmp_name"];
+$nombreArchivo = $_FILES["file"]["name"];
+
+// 📌 Verificar si el archivo realmente existe
+if (!file_exists($rutaTemporal)) {
+    file_put_contents("error_log.txt", "❌ Error: El archivo temporal no existe.\n", FILE_APPEND);
+    http_response_code(400);
+    echo json_encode(["message" => "❌ Error al subir el archivo"]);
+    exit;
+}
+
+// 📌 Verificar número de documento
+if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
+    http_response_code(400);
+    echo json_encode(["message" => "❌ Número de documento es requerido"]);
+    exit;
+}
+$docNumber = substr(trim($_POST['docNumber']), 0, 12); // Limitar a 12 caracteres
+
+$file_mime_type = mime_content_type($rutaTemporal) ?: "application/octet-stream";
+
+// 📌 Verificar y formatear el monto
+if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
+    http_response_code(400);
+    echo json_encode(["message" => "❌ El monto es requerido"]);
+    exit;
+}
+
+$montoRaw = preg_replace('/[^\d]/', '', $_POST['monto']);
+$montoFormatted = (strlen($montoRaw) === 4) ? substr($montoRaw, 0, 1) . '.' . substr($montoRaw, 1) : $montoRaw;
+
+$fecha = date('Y-m-d H:i:s');  // Fecha y hora actual
+
+// ✅ **Obtener usuario correctamente**
+$adminName = isset($_POST["usuario"]) ? $_POST["usuario"] : "Desconocido";
+
+// ✅ **Verificar datos antes de enviar a Google Sheets**
+file_put_contents("google_sheets_log.txt", "📌 Datos recibidos en procesar.php: " . json_encode($_POST) . "\n", FILE_APPEND);
+
+// 📌 **URL de Google Sheets (REEMPLAZA CON TU URL)**
+$googleUrl = "https://script.google.com/macros/s/AKfycbxDrVkMvT-blML1TaSr6Jos6xwsuSF68To73E7JUC6f5oQbnbTJmHC8iMHHiCbVnz8g/exec";
+
+// 📌 **Si se recibe una actualización desde `callback.php`**
+if (isset($_POST['usuario']) && isset($_POST['callback'])) {
+    $adminName = $_POST["usuario"];
+    $estado = $_POST["callback"]; // "completado" o "rechazado"
+
+    // 📌 **Enviar datos a Google Sheets**
+    $data = [
+        "usuario" => $adminName,
+        "documento" => $docNumber,
+        "monto" => $montoFormatted,
+        "estado" => $estado
     ];
 
-    if ($imagen) {
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $bot_url,
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POSTFIELDS => [
-                'chat_id' => $CHAT_ID,
-                'photo' => new CURLFile($imagen),
-                'caption' => $telegram_data['caption'],
-                'reply_markup' => $telegram_data['reply_markup']
-            ]
-        ]);
-        curl_exec($curl);
-        curl_close($curl);
-    } else {
-        file_get_contents($bot_url . "?" . http_build_query($telegram_data));
-    }
+    $options = [
+        "http" => [
+            "header"  => "Content-type: application/x-www-form-urlencoded",
+            "method"  => "POST",
+            "content" => http_build_query($data)
+        ]
+    ];
 
-    // ✅ Enviar datos a Google Sheets
-    function sendToGoogleSheets($documento, $monto, $fecha) {
-        $url = "https://script.google.com/macros/s/AKfycbxd_HaacOaXDZA6IoLe4LSl97a0RWPphonN_49r99vq2ftYQ7wLGyGecT3lH20ZbJslnw/exec";
-        
-        $postData = json_encode([
-            "documento" => $documento,
-            "monto" => $monto,
-            "usuario" => "Cliente", // Se registra como cliente
-            "estado" => "Pendiente"
-        ]);
-        
-        $options = [
-            "http" => [
-                "header"  => "Content-Type: application/json",
-                "method"  => "POST",
-                "content" => $postData,
-            ],
-        ];
+    $context  = stream_context_create($options);
+    $response = file_get_contents($googleUrl, false, $context);
 
-        $context  = stream_context_create($options);
-        file_get_contents($url, false, $context);
-    }
+    // 📌 **Guardar respuesta en un log**
+    file_put_contents("google_sheets_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
 
-    // Enviar datos a Google Sheets
-    sendToGoogleSheets($documento, $monto, $fecha);
-
-    echo json_encode(["status" => "success", "message" => "Datos enviados correctamente."]);
-} else {
-    echo json_encode(["status" => "error", "message" => "Método no permitido."]);
+    echo json_encode(["message" => "✅ Usuario registrado en Google Sheets"]);
+    exit;
 }
+
+// 📌 **URL de Telegram para enviar el documento**
+$url = "https://api.telegram.org/bot$TOKEN/sendDocument";
+
+// 📌 **Preparar mensaje para Telegram**
+$caption = "📎 Nuevo QR recibido:\n\n" .
+           "📝 Archivo: $nombreArchivo\n" .
+           "📅 Fecha de carga: $fecha\n" .
+           "🪪 Documento: $docNumber\n" .
+           "💰 Monto: $montoFormatted\n\n" .
+           "🔔 Por favor, Realizar el pago.";
+
+// 📌 **Inline keyboard (botones)**
+$keyboard = json_encode([
+    "inline_keyboard" => [
+        [["text" => "✅ Completado", "callback_data" => "completado"]],
+        [["text" => "❌ Rechazado", "callback_data" => "rechazado"]]
+    ]
+]);
+
+// 📌 **Datos para enviar a Telegram**
+$postData = [
+    "chat_id" => $CHAT_ID,
+    "document" => new CURLFile($rutaTemporal, $file_mime_type, $nombreArchivo),
+    "caption" => $caption,
+    "parse_mode" => "Markdown",
+    "reply_markup" => $keyboard
+];
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+$curl_error = curl_error($ch);
+$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+// 📌 **Guardar respuesta de Telegram en log**
+file_put_contents("telegram_error_log.txt", "HTTP Status: $http_status\nResponse: $response\nCurl Error: $curl_error\n", FILE_APPEND);
+
+// 📌 **Verificar si hubo error en la solicitud a Telegram**
+if ($response === false || $http_status != 200) {
+    http_response_code(500);
+    echo json_encode([
+        "message"    => "❌ Error al enviar a Telegram.",
+        "curl_error" => $curl_error,
+        "http_status"=> $http_status,
+        "response"   => $response
+    ]);
+    exit;
+}
+
+// ✅ **Si todo fue exitoso**
+echo json_encode(["message" => "✅ QR enviado con éxito a Telegram y Google Sheets"]);
+exit;
 ?>
