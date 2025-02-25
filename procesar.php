@@ -40,7 +40,7 @@ if (!file_exists($registroNumeroOrden)) {
 $ultimoNumeroOrden = file_get_contents($registroNumeroOrden);
 
 // Incrementar el número de orden
-$uniqueId = "DP" . str_pad($ultimoNumeroOrden + 1, 4, "0", STR_PAD_LEFT);
+$numeroDeOrden = "DP" . str_pad($ultimoNumeroOrden + 1, 5, "0", STR_PAD_LEFT);
 
 // Actualizar el archivo con el nuevo número de orden
 file_put_contents($registroNumeroOrden, $ultimoNumeroOrden + 1);
@@ -68,7 +68,7 @@ $fecha = date('Y-m-d H:i:s');
 $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 
 // Preparar el mensaje que se enviará a Telegram
-$caption = "🆔 Número de Orden: `$uniqueId`\n" .
+$caption = "🆔 Número de Orden: `$numeroDeOrden\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
            "💰 Monto: $monto\n\n" .
@@ -111,5 +111,6 @@ if ($response === false || $http_status != 200) {
   exit;
 }
 
-echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram", "orden" => $uniqueId]);
+echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram", "orden" => $numeroDeOrden]);
+"orden" => $numeroDeOrden
 ?>
