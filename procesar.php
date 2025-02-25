@@ -28,7 +28,7 @@ if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
 }
 
 // Generar número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
+$uniqueId = "DP" . str_pad(rand(0, 9999), 5, "0", STR_PAD_LEFT);
 
 // Verificar número de documento
 if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
@@ -38,14 +38,13 @@ if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
 }
 $docNumber = substr(trim($_POST['docNumber']), 0, 12);
 
-// Verificar y formatear el monto
+// Verificar y tomar el monto directamente como lo recibe el formulario
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
   http_response_code(400);
   echo json_encode(["message" => "El monto es requerido"]);
   exit;
 }
-$montoRaw = preg_replace('/[^\d]/', '', $_POST['monto']);
-$montoFormatted = strlen($montoRaw) === 4 ? substr($montoRaw, 0, 1) . '.' . substr($montoRaw, 1) : $montoRaw;
+$monto = $_POST['monto'];  // Tomar el monto directamente como lo recibe
 
 $nombreArchivo = $_FILES["file"]["name"];
 $rutaTemporal = $_FILES["file"]["tmp_name"];
@@ -57,7 +56,7 @@ $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 $caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
-           "💰 Monto: $montoFormatted\n\n" .
+           "💰 Monto: $monto\n\n" .
            "🔔 Por favor, Realizar el pago.";
 
 $keyboard = json_encode([
