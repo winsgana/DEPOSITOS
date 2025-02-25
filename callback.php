@@ -17,15 +17,8 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Leer el último número de orden del archivo
-$ultimoNumeroOrden = file_get_contents($registroNumeroOrden);
-
-// Incrementar el número de orden
-$numeroDeOrden = "DP" . str_pad($ultimoNumeroOrden + 1, 5, "0", STR_PAD_LEFT);
-
-// Actualizar el archivo con el nuevo número de orden
-file_put_contents($registroNumeroOrden, $ultimoNumeroOrden + 1);
-
+// Generación del número de orden aleatorio
+$uniqueId = "DP" . str_pad(rand(0, 9999), 4, "0", STR_PAD_LEFT);
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
@@ -64,7 +57,7 @@ if ($responseDelete === false || $http_status != 200) {
 
 // Enviar un nuevo mensaje con la información actualizada
 $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
-$nuevoTexto = "🆔 Número de Orden: `$numeroDeOrden`\n" .
+$nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
               "👤 Administrador: $adminName\n" .
               "📅 Fecha de acción: $fechaAccion\n" .
               "$accionTexto";
