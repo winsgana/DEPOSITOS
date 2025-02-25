@@ -27,8 +27,16 @@ if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
   exit;
 }
 
-// Generar número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 9999), 4, "0", STR_PAD_LEFT);
+// Generar número de orden secuencial
+$uniqueIdFile = "unique_id.txt";
+if (!file_exists($uniqueIdFile)) {
+    file_put_contents($uniqueIdFile, "0");  // Inicializar el archivo si no existe
+}
+$lastUniqueId = (int)file_get_contents($uniqueIdFile);
+$newUniqueId = $lastUniqueId + 1;
+file_put_contents($uniqueIdFile, $newUniqueId);  // Guardar el nuevo número
+
+$uniqueId = "DP" . str_pad($newUniqueId, 5, "0", STR_PAD_LEFT);
 
 // Verificar número de documento
 if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
@@ -61,8 +69,8 @@ $caption = "🆔 Número de Orden: `$uniqueId`\n" .
 
 $keyboard = json_encode([
     "inline_keyboard" => [
-        [["text" => "✅ Completado", "callback_data" => "completado"]],
-        [["text" => "❌ Rechazado", "callback_data" => "rechazado"]]
+        [["text" => "✅ Completado", "callback_data" => "completado-$uniqueId"]],
+        [["text" => "❌ Rechazado", "callback_data" => "rechazado-$uniqueId"]]
     ]
 ]);
 
