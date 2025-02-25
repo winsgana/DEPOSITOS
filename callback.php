@@ -17,8 +17,8 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Generación del número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 9999), 5, "0", STR_PAD_LEFT);
+// Obtener el número de orden de la respuesta anterior (debe ser pasado por procesar.php)
+$numeroDeOrden = $update["callback_query"]["message"]["text"]; // O el número que se pasó como parámetro en el mensaje original
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
