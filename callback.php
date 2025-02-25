@@ -17,10 +17,10 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Obtener el número de orden desde la caption
-preg_match('/🆔 Número de Orden: `(DP\d{5})`/', $update["callback_query"]["message"]["caption"], $matches);
-$uniqueId = $matches[1] ?? "Desconocido";  // Usar el número de orden
+// Generación del número de orden aleatorio
+$uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
 
+// Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
@@ -30,38 +30,59 @@ if (isset($user["username"])) {
 $accionTexto = ($callbackData === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
 $fechaAccion = date('Y-m-d H:i:s');
 
-// Actualizar el mensaje con la nueva información
-$url = "https://api.telegram.org/bot$TOKEN/editMessageCaption";
+// Eliminar el mensaje original
+$urlDelete = "https://api.telegram.org/bot$TOKEN/deleteMessage";
+$postDataDelete = [
+    "chat_id" => $chatId,
+    "message_id" => $messageId
+];
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $urlDelete);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $postDataDelete);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$responseDelete = curl_exec($ch);
+$curl_error = curl_error($ch);
+$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+file_put_contents("callback_log.txt", "📌 Respuesta de borrar mensaje: " . $responseDelete . "\n", FILE_APPEND);
+
+if ($responseDelete === false || $http_status != 200) {
+    file_put_contents("callback_log.txt", "❌ Error al borrar el mensaje: $curl_error\n", FILE_APPEND);
+    exit;
+}
+
+// Enviar un nuevo mensaje con la información actualizada
+$url = "https://api.telegram.org/bot$TOKEN/sendMessage";
 $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
               "👤 Administrador: $adminName\n" .
               "📅 Fecha de acción: $fechaAccion\n" .
               "$accionTexto";
 
-$postData = [
-    "chat_id"    => $chatId,
-    "message_id" => $messageId,
-    "caption"    => $nuevoTexto,
-    "parse_mode" => "Markdown",
-    "reply_markup" => json_encode([
-        "remove_keyboard" => true  // Eliminar los botones
-    ])
+$postDataSend = [
+    "chat_id" => $chatId,
+    "text" => $nuevoTexto,
+    "parse_mode" => "Markdown"
 ];
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $postDataSend);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-$response = curl_exec($ch);
+$responseSend = curl_exec($ch);
 $curl_error = curl_error($ch);
 $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-file_put_contents("callback_log.txt", "📌 Respuesta completa de Telegram: " . $response . "\n", FILE_APPEND);
+file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: " . $responseSend . "\n", FILE_APPEND);
 
-if ($response === false || $http_status != 200) {
-    file_put_contents("callback_log.txt", "❌ Error al editar el mensaje: $curl_error\n", FILE_APPEND);
+if ($responseSend === false || $http_status != 200) {
+    file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
 }
 
 exit;
