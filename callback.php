@@ -16,8 +16,8 @@ $chatId = $update["callback_query"]["message"]["chat"]["id"];
 $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 
-// Extraer el uniqueId y el monto del callback_data
-preg_match('/(completado|rechazado)-(DP\d{4})-(.*)/', $callbackData, $matches);
+// Extraer datos del callback_data
+preg_match('/(completado|rechazado)-(DP\d{4})-(.*?)-(\d{1,12})/', $callbackData, $matches);
 if (!$matches) {
     file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
     exit;
@@ -26,6 +26,7 @@ if (!$matches) {
 $accion = $matches[1];  // "completado" o "rechazado"
 $uniqueId = $matches[2];  // El uniqueId generado en procesar.php
 $monto = $matches[3];  // El monto enviado desde procesar.php
+$docNumber = $matches[4];  // El numero de documento procesar.php
 
 // Obtener nombre del usuario
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
@@ -67,6 +68,7 @@ $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
 $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
               "👤 Administrador: $adminName\n" .
               "📅 Fecha de acción: $fechaAccion\n" .
+              "🪪 Documento: $docNumber\n" .
               "💰 Monto: $monto\n" .  // Aquí agregamos el monto
               "$accionTexto";
 
