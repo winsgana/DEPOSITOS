@@ -38,13 +38,14 @@ if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
 }
 $docNumber = substr(trim($_POST['docNumber']), 0, 12);
 
-// Verificar y tomar el monto tal cual es recibido (sin ningún ajuste)
+// Verificar y formatear el monto
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
   http_response_code(400);
   echo json_encode(["message" => "El monto es requerido"]);
   exit;
 }
-$monto = $_POST['monto'];  // Tomar el monto directamente como lo recibe
+$montoRaw = preg_replace('/[^\d]/', '', $_POST['monto']);
+$montoFormatted = strlen($montoRaw) === 4 ? substr($montoRaw, 0, 1) . '.' . substr($montoRaw, 1) : $montoRaw;
 
 $nombreArchivo = $_FILES["file"]["name"];
 $rutaTemporal = $_FILES["file"]["tmp_name"];
@@ -98,4 +99,3 @@ if ($response === false || $http_status != 200) {
 
 echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram", "orden" => $uniqueId]);
 ?>
-
