@@ -83,6 +83,28 @@ file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: "
 
 if ($responseSend === false || $http_status != 200) {
     file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
+
+    // Enviar datos al script de Google Apps para registrar en Sheets
+$googleScriptUrl = "https://script.google.com/macros/s/AKfycbxTaqTq_MTmtY61yQ7u1HFQajTxnTjC4wL2VQiNhA00lzHQU86v-Y1shDU5Osy504vP/exec"; // La URL de tu script
+$data = [
+    'docNumber' => $docNumber,
+    'monto' => $monto,
+    'uniqueId' => $uniqueId,
+    'action' => $accionTexto
+];
+
+$options = [
+    'http' => [
+        'method' => 'POST',
+        'header' => 'Content-type: application/json',
+        'content' => json_encode($data),
+    ]
+];
+$context = stream_context_create($options);
+$response = file_get_contents($googleScriptUrl, false, $context);
+
+// Loguear la respuesta de Google Sheets (opcional)
+file_put_contents("callback_log.txt", "📌 Respuesta de Google Sheets: " . $response . "\n", FILE_APPEND);
 }
 
 exit;
