@@ -36,7 +36,7 @@ $lastUniqueId = (int)file_get_contents($uniqueIdFile);
 $newUniqueId = $lastUniqueId + 1;
 file_put_contents($uniqueIdFile, $newUniqueId);  // Guardar el nuevo número
 
-$uniqueId = "DP" . str_pad($newUniqueId, 5, "0", STR_PAD_LEFT);
+$uniqueId = "DP" . str_pad($newUniqueId, 4, "0", STR_PAD_LEFT);
 
 // Verificar número de documento
 if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
@@ -69,8 +69,8 @@ $caption = "🆔 Número de Orden: `$uniqueId`\n" .
 
 $keyboard = json_encode([
     "inline_keyboard" => [
-        [["text" => "✅ Completado", "callback_data" => "completado-$uniqueId"]],
-        [["text" => "❌ Rechazado", "callback_data" => "rechazado-$uniqueId"]]
+        [["text" => "✅ Completado", "callback_data" => "completado-$uniqueId-$monto"]],
+        [["text" => "❌ Rechazado", "callback_data" => "rechazado-$uniqueId-$monto"]]
     ]
 ]);
 
