@@ -40,7 +40,7 @@ if (!file_exists($registroNumeroOrden)) {
 $ultimoNumeroOrden = file_get_contents($registroNumeroOrden);
 
 // Incrementar el número de orden
-$numeroDeOrden = "DP" . str_pad($ultimoNumeroOrden + 1, 4, "0", STR_PAD_LEFT);
+$uniqueId = "DP" . str_pad($ultimoNumeroOrden + 1, 5, "0", STR_PAD_LEFT);
 
 // Actualizar el archivo con el nuevo número de orden
 file_put_contents($registroNumeroOrden, $ultimoNumeroOrden + 1);
