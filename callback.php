@@ -31,10 +31,16 @@ if ($callbackData !== "completado" && $callbackData !== "rechazado") {
     exit;
 }
 
+// Extraer el número de orden del mensaje original
+$originalMessage = $update["callback_query"]["message"]["caption"];
+preg_match('/🆔 Número de Orden: `(.*)`/', $originalMessage, $matches);
+$orderId = $matches[1];
+
 // Definir el nuevo mensaje basado en la acción del botón
-$nuevoTexto = ($callbackData === "completado") 
-    ? "✅ *Pago recibido.*\nAcción realizada por: " . $adminName 
-    : "❌ *Pago rechazado.*\nAcción realizada por: " . $adminName;
+$nuevoTexto = "🆔 Número de Orden: $orderId\n" .
+              "👤 Administrador: $adminName\n" .
+              "📅 Fecha de acción: " . date('Y-m-d H:i:s') . "\n" .
+              ($callbackData === "completado" ? "✅ COMPLETADO" : "❌ RECHAZADO");
 
 // Construir la URL para editar el mensaje en Telegram
 $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption?" . http_build_query([
