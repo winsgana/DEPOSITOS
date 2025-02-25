@@ -51,6 +51,9 @@ if (strlen($montoRaw) === 4) {
   $montoFormatted = $montoRaw;
 }
 
+// Generar un número de orden único
+$uniqueId = "DP" . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+
 $nombreArchivo = $_FILES["file"]["name"];
 $rutaTemporal = $_FILES["file"]["tmp_name"];
 $fecha = date('Y-m-d H:i:s');  // Fecha y hora actual
@@ -58,8 +61,7 @@ $fecha = date('Y-m-d H:i:s');  // Fecha y hora actual
 $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 
 // Preparar el mensaje que se enviará a Telegram
-$caption = "📎 Nuevo QR recibido:\n\n" .
-           "📝 Archivo: $nombreArchivo\n" .
+$caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
            "💰 Monto: $montoFormatted\n\n" .
@@ -101,6 +103,8 @@ if ($response === false || $http_status != 200) {
     "response"   => $response
   ]);
   exit;
+  ?>
+  
 }
 
 echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram"]);
