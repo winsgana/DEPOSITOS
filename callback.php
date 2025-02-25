@@ -59,14 +59,14 @@ if ($photo) {
     $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    file_put_contents("callback_log.txt", "📌 Enviando datos a procesar.php...\\n", FILE_APPEND);
+    file_put_contents("callback_log.txt", "📌 Respuesta completa de Telegram: " . $response . "\n", FILE_APPEND);
 
-    $procesarResponse = file_get_contents($procesarUrl, false, $context);
-
-    file_put_contents("callback_log.txt", "📌 Respuesta de procesar.php: " . $procesarResponse . "\\n", FILE_APPEND);
+    if ($response === false || $http_status != 200) {
+        file_put_contents("callback_log.txt", "❌ Error al editar el mensaje: $curl_error\n", FILE_APPEND);
     }
 }
 
+// ✅ Envío a procesar.php
 $procesarUrl = "http://localhost/procesar.php";
 $data = [
     "usuario" => $adminName,
@@ -80,6 +80,9 @@ $options = [
     ]
 ];
 $context  = stream_context_create($options);
+
+file_put_contents("callback_log.txt", "📌 Enviando datos a procesar.php...\n", FILE_APPEND);
+
 $procesarResponse = file_get_contents($procesarUrl, false, $context);
 
 file_put_contents("callback_log.txt", "📌 Respuesta de procesar.php: " . $procesarResponse . "\n", FILE_APPEND);
