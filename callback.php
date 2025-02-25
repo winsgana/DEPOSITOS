@@ -24,7 +24,7 @@ $uniqueId = $matches[1] ?? "Desconocido";  // Usar el número de orden
 preg_match('/💰 Monto: `([^`]+)`/', $update["callback_query"]["message"]["caption"], $montoMatches);
 $monto = $montoMatches[1] ?? "Desconocido";  // Usar el monto del mensaje
 
-// Datos del administrador
+// Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
@@ -89,6 +89,9 @@ file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: "
 if ($responseSend === false || $http_status != 200) {
     file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
 }
+
+exit;
+?>
 
 exit;
 ?>
