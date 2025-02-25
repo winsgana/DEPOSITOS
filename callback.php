@@ -18,7 +18,7 @@ $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
 // Obtener el número de orden de la respuesta anterior (debe ser pasado por procesar.php)
-$uniqueId = $update["callback_query"]["message"]["text"]; // O el número que se pasó como parámetro en el mensaje original
+$uniqueId = $update["callback_query"]["message"]["caption"]; // O el número que se pasó como parámetro en el mensaje original
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
