@@ -17,6 +17,9 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
+// Generación del número de orden aleatorio
+$uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
+
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
@@ -27,14 +30,29 @@ if ($callbackData !== "completado" && $callbackData !== "rechazado") {
     exit;
 }
 
-preg_match('/🆔 Número de Orden: `(DP\\d{5})`/', $update["callback_query"]["message"]["caption"], $matches);
-$numeroOrden = $matches[1] ?? "Desconocido";
-
 $fechaAccion = date('Y-m-d H:i:s');
 $accionTexto = ($callbackData === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
 
+// Enviar el número de orden a procesar.php
+$procesarUrl = "http://localhost/procesar.php";  // Cambia a la URL correcta en tu entorno (Render o localhost)
+$data = [
+    "numeroOrden" => $uniqueId
+];
+$options = [
+    "http" => [
+        "header"  => "Content-type: application/x-www-form-urlencoded",
+        "method"  => "POST",
+        "content" => http_build_query($data)
+    ]
+];
+$context  = stream_context_create($options);
+$procesarResponse = file_get_contents($procesarUrl, false, $context);
+
+file_put_contents("callback_log.txt", "📌 Respuesta de procesar.php: " . $procesarResponse . "\n", FILE_APPEND);
+
+// Editar el mensaje en Telegram
 if ($photo) {
-    $nuevoTexto = "🆔 Número de Orden: `$numeroOrden`\n" .
+    $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
                   "👤 Administrador: $adminName\n" .
                   "📅 Fecha de acción: $fechaAccion\n" .
                   "$accionTexto";
@@ -65,27 +83,6 @@ if ($photo) {
         file_put_contents("callback_log.txt", "❌ Error al editar el mensaje: $curl_error\n", FILE_APPEND);
     }
 }
-
-// ✅ Envío a procesar.php
-$procesarUrl = "http://localhost/procesar.php";
-$data = [
-    "usuario" => $adminName,
-    "callback" => $callbackData
-];
-$options = [
-    "http" => [
-        "header"  => "Content-type: application/x-www-form-urlencoded",
-        "method"  => "POST",
-        "content" => http_build_query($data)
-    ]
-];
-$context  = stream_context_create($options);
-
-file_put_contents("callback_log.txt", "📌 Enviando datos a procesar.php...\n", FILE_APPEND);
-
-$procesarResponse = file_get_contents($procesarUrl, false, $context);
-
-file_put_contents("callback_log.txt", "📌 Respuesta de procesar.php: " . $procesarResponse . "\n", FILE_APPEND);
 
 exit;
 ?>
