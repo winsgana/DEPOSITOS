@@ -27,7 +27,6 @@ if ($callbackData !== "completado" && $callbackData !== "rechazado") {
     exit;
 }
 
-// Extraer el número de orden
 preg_match('/🆔 Número de Orden: `(DP\\d{5})`/', $update["callback_query"]["message"]["caption"], $matches);
 $numeroOrden = $matches[1] ?? "Desconocido";
 
@@ -41,6 +40,7 @@ if ($photo) {
                   "$accionTexto";
 
     $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption";
+
     $postData = [
         "chat_id"    => $chatId,
         "message_id" => $messageId,
@@ -48,17 +48,22 @@ if ($photo) {
         "parse_mode" => "Markdown"
     ];
 
-    $options = [
-        "http" => [
-            "header"  => "Content-type: application/x-www-form-urlencoded",
-            "method"  => "POST",
-            "content" => http_build_query($postData)
-        ]
-    ];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-    $context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-    file_put_contents("callback_log.txt", "📌 Respuesta de Telegram: " . $response . "\n", FILE_APPEND);
+    $response = curl_exec($ch);
+    $curl_error = curl_error($ch);
+    $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    file_put_contents("callback_log.txt", "📌 Respuesta completa de Telegram: " . $response . "\n", FILE_APPEND);
+
+    if ($response === false || $http_status != 200) {
+        file_put_contents("callback_log.txt", "❌ Error al editar el mensaje: $curl_error\n", FILE_APPEND);
+    }
 }
 
 $procesarUrl = "https://depositos.onrender.com/procesar.php";
