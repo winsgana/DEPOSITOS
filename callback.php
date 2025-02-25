@@ -64,7 +64,7 @@ if ($responseDelete === false || $http_status != 200) {
 
 // Enviar un nuevo mensaje con la información actualizada
 $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
-$nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
+$nuevoTexto = "🆔 Número de Orden: `$numeroDeOrden`\n" .
               "👤 Administrador: $adminName\n" .
               "📅 Fecha de acción: $fechaAccion\n" .
               "$accionTexto";
