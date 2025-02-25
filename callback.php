@@ -19,6 +19,7 @@ $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
 // Aquí extraemos el número de orden del caption que se envió en el mensaje original
 $caption = $update["callback_query"]["message"]["caption"];
+preg_match('/🆔 Número de Orden: `(DP\d{4})`/', $caption, $matches);  // Regular expression para capturar el número de orden
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
