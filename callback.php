@@ -17,8 +17,15 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Aquí extraemos el número de orden del caption que se envió en el mensaje original
-$caption = $update["callback_query"]["message"]["caption"];
+// Leer el último número de orden del archivo
+$ultimoNumeroOrden = file_get_contents($registroNumeroOrden);
+
+// Incrementar el número de orden
+$numeroDeOrden = "DP" . str_pad($ultimoNumeroOrden + 1, 5, "0", STR_PAD_LEFT);
+
+// Actualizar el archivo con el nuevo número de orden
+file_put_contents($registroNumeroOrden, $ultimoNumeroOrden + 1);
+
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
