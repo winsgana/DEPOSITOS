@@ -194,11 +194,7 @@
     // Eliminar cualquier punto en el monto (en caso de re-edición)
     monto = monto.replace(/\./g, '');
 
-    // Formatear el monto si tiene 4 dígitos (insertar punto de separación de miles)
-    if (monto.length === 4) {
-      monto = monto.slice(0,1) + '.' + monto.slice(1);
-    }
-
+    // Sin formatear el monto, tomamos el valor tal como es ingresado
     formData.append('file', file);
     formData.append('docNumber', docNumber);
     formData.append('monto', monto);
