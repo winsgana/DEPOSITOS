@@ -112,5 +112,4 @@ if ($response === false || $http_status != 200) {
 }
 
 echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram", "orden" => $uniqueId]);
-"orden" => $uniqueId
 ?>
