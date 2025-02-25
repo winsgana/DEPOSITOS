@@ -1,5 +1,5 @@
 <?php
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";
+$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";  // Token del bot
 
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
@@ -17,71 +17,51 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Generación del número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
+// Obtener el número de orden desde la caption
+preg_match('/🆔 Número de Orden: `(DP\d{5})`/', $update["callback_query"]["message"]["caption"], $matches);
+$uniqueId = $matches[1] ?? "Desconocido";  // Usar el número de orden
 
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
 }
 
-if ($callbackData !== "completado" && $callbackData !== "rechazado") {
-    file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
-    exit;
-}
-
-$fechaAccion = date('Y-m-d H:i:s');
+// Acción tomada
 $accionTexto = ($callbackData === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
+$fechaAccion = date('Y-m-d H:i:s');
 
-// Enviar el número de orden a procesar.php
-$procesarUrl = "http://localhost/procesar.php";  // Cambia a la URL correcta en tu entorno (Render o localhost)
-$data = [
-    "numeroOrden" => $uniqueId
+// Actualizar el mensaje con la nueva información
+$url = "https://api.telegram.org/bot$TOKEN/editMessageCaption";
+$nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
+              "👤 Administrador: $adminName\n" .
+              "📅 Fecha de acción: $fechaAccion\n" .
+              "$accionTexto";
+
+$postData = [
+    "chat_id"    => $chatId,
+    "message_id" => $messageId,
+    "caption"    => $nuevoTexto,
+    "parse_mode" => "Markdown",
+    "reply_markup" => json_encode([
+        "remove_keyboard" => true  // Eliminar los botones
+    ])
 ];
-$options = [
-    "http" => [
-        "header"  => "Content-type: application/x-www-form-urlencoded",
-        "method"  => "POST",
-        "content" => http_build_query($data)
-    ]
-];
-$context  = stream_context_create($options);
-$procesarResponse = file_get_contents($procesarUrl, false, $context);
 
-file_put_contents("callback_log.txt", "📌 Respuesta de procesar.php: " . $procesarResponse . "\n", FILE_APPEND);
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-// Editar el mensaje en Telegram
-if ($photo) {
-    $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
-                  "👤 Administrador: $adminName\n" .
-                  "📅 Fecha de acción: $fechaAccion\n" .
-                  "$accionTexto";
+$response = curl_exec($ch);
+$curl_error = curl_error($ch);
+$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
 
-    $url = "https://api.telegram.org/bot$TOKEN/editMessageCaption";
+file_put_contents("callback_log.txt", "📌 Respuesta completa de Telegram: " . $response . "\n", FILE_APPEND);
 
-    $postData = [
-        "chat_id"    => $chatId,
-        "message_id" => $messageId,
-        "caption"    => $nuevoTexto,
-        "parse_mode" => "Markdown"
-    ];
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    $response = curl_exec($ch);
-    $curl_error = curl_error($ch);
-    $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    file_put_contents("callback_log.txt", "📌 Respuesta completa de Telegram: " . $response . "\n", FILE_APPEND);
-
-    if ($response === false || $http_status != 200) {
-        file_put_contents("callback_log.txt", "❌ Error al editar el mensaje: $curl_error\n", FILE_APPEND);
-    }
+if ($response === false || $http_status != 200) {
+    file_put_contents("callback_log.txt", "❌ Error al editar el mensaje: $curl_error\n", FILE_APPEND);
 }
 
 exit;
