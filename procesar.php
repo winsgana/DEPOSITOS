@@ -38,14 +38,13 @@ if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
 }
 $docNumber = substr(trim($_POST['docNumber']), 0, 12);
 
-// Verificar y formatear el monto
+// Verificar y tomar el monto tal cual es recibido (sin ningún ajuste)
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
   http_response_code(400);
   echo json_encode(["message" => "El monto es requerido"]);
   exit;
 }
-$montoRaw = preg_replace('/[^\d]/', '', $_POST['monto']);
-$montoFormatted = strlen($montoRaw) === 4 ? substr($montoRaw, 0, 1) . '.' . substr($montoRaw, 1) : $montoRaw;
+$monto = $_POST['monto'];  // Tomar el monto directamente como lo recibe
 
 $nombreArchivo = $_FILES["file"]["name"];
 $rutaTemporal = $_FILES["file"]["tmp_name"];
