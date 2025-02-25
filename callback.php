@@ -17,8 +17,16 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Obtener el número de orden de la respuesta anterior (debe ser pasado por procesar.php)
-$uniqueId = $update["callback_query"]["message"]["caption"]; // O el número que se pasó como parámetro en el mensaje original
+// Aquí extraemos el número de orden del caption que se envió en el mensaje original
+$caption = $update["callback_query"]["message"]["caption"];
+preg_match('/🆔 Número de Orden: `(DP\d{4})`/', $caption, $matches);  // Regular expression para capturar el número de orden
+
+if (isset($matches[1])) {
+    $uniqueId = $matches[1];  // El número de orden extraído
+} else {
+    file_put_contents("callback_log.txt", "❌ Error: No se encontró el número de orden.\n", FILE_APPEND);
+    exit;
+}
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
