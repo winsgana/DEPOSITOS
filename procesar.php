@@ -27,8 +27,23 @@ if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
   exit;
 }
 
-// Generar número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 9999), 5, "0", STR_PAD_LEFT);
+// Generar número de orden secuencial
+$registroNumeroOrden = 'ultimo_numero_orden.txt';
+
+// Verificar si el archivo existe
+if (!file_exists($registroNumeroOrden)) {
+    // Si no existe, crearlo con el valor inicial 0
+    file_put_contents($registroNumeroOrden, '0');
+}
+
+// Leer el último número de orden del archivo
+$ultimoNumeroOrden = file_get_contents($registroNumeroOrden);
+
+// Incrementar el número de orden
+$numeroDeOrden = "DP" . str_pad($ultimoNumeroOrden + 1, 4, "0", STR_PAD_LEFT);
+
+// Actualizar el archivo con el nuevo número de orden
+file_put_contents($registroNumeroOrden, $ultimoNumeroOrden + 1);
 
 // Verificar número de documento
 if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
@@ -97,4 +112,5 @@ if ($response === false || $http_status != 200) {
 }
 
 echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram", "orden" => $uniqueId]);
+"orden" => $numeroDeOrden
 ?>
