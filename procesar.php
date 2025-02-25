@@ -37,7 +37,8 @@ $uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
 $fecha = date('Y-m-d H:i:s'); 
 
 // Preparar el mensaje a enviar a Telegram
-$mensaje = "🆔 Número de Orden: `$uniqueId`\n" .
+$mensaje = "📎 Nuevo QR recibido:\n\n" .
+           "🆔 Número de Orden: `$uniqueId`\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
            "💰 Monto: $montoFormatted\n\n" .
