@@ -15,19 +15,25 @@ $callbackData = $update["callback_query"]["data"];
 $chatId = $update["callback_query"]["message"]["chat"]["id"];
 $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
-$photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Generación del número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 9999), 4, "0", STR_PAD_LEFT);
+// Extraer el uniqueId del callback_data
+preg_match('/(completado|rechazado)-(DP\d{5})/', $callbackData, $matches);
+if (!$matches) {
+    file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
+    exit;
+}
 
-// Datos del cliente
+$accion = $matches[1];  // "completado" o "rechazado"
+$uniqueId = $matches[2];  // El uniqueId generado en procesar.php
+
+// Obtener nombre del usuario
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
 }
 
 // Acción tomada
-$accionTexto = ($callbackData === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
+$accionTexto = ($accion === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
 $fechaAccion = date('Y-m-d H:i:s');
 
 // Eliminar el mensaje original
