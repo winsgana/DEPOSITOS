@@ -28,7 +28,7 @@ if (isset($user["username"])) {
 }
 
 // Obtener monto desde la caption
-preg_match('/💰 Monto: `([^`]+)`/', $update["callback_query"]["message"]["caption"], $montoMatches);
+preg_match('/💰 Monto:\s*([0-9,\.]+)/', $update["callback_query"]["message"]["caption"], $montoMatches);
 $monto = $montoMatches[1] ?? "Desconocido";  // Usar el monto del mensaje
 
 // Acción tomada
