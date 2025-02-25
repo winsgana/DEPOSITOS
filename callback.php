@@ -17,22 +17,18 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Generación del número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
+// Obtener el número de orden y monto desde la caption
+preg_match('/🆔 Número de Orden: `(DP\d{5})`/', $update["callback_query"]["message"]["caption"], $matches);
+$uniqueId = $matches[1] ?? "Desconocido";  // Usar el número de orden
 
-// Datos del cliente
+preg_match('/💰 Monto: `([^`]+)`/', $update["callback_query"]["message"]["caption"], $montoMatches);
+$monto = $montoMatches[1] ?? "Desconocido";  // Usar el monto del mensaje
+
+// Datos del administrador
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
 }
-
-// Obtener número de orden desde la caption
-preg_match('/🆔 Número de Orden: `(DP\d{5})`/', $update["callback_query"]["message"]["caption"], $matches);
-$uniqueId = $matches[1] ?? "Desconocido";  // Si no se encuentra, poner "Desconocido"
-
-// Obtener monto desde la caption
-preg_match('/💰 Monto: `([^`]+)`/', $update["callback_query"]["message"]["caption"], $montoMatches);
-$monto = $montoMatches[1] ?? "Desconocido";  // Si no se encuentra, poner "Desconocido"
 
 // Acción tomada
 $accionTexto = ($callbackData === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
