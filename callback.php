@@ -18,7 +18,9 @@ $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
 // Generación del número de orden aleatorio
-$uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
+$uniqueId = "DP" . str_pad(rand(0, 9999), 5, "0", STR_PAD_LEFT);
+
+$monto = $montoMatches[1] ?? "Desconocido";  // Usar el monto del mensaje
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
