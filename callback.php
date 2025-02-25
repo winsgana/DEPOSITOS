@@ -66,7 +66,7 @@ if ($photo) {
     }
 }
 
-$procesarUrl = "https://depositos.onrender.com/procesar.php";
+$procesarUrl = "http://localhost/procesar.php";
 $data = [
     "usuario" => $adminName,
     "callback" => $callbackData
