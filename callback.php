@@ -17,12 +17,8 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 $photo = $update["callback_query"]["message"]["photo"] ?? null;
 
-// Obtener el número de orden y monto desde la caption
-preg_match('/🆔 Número de Orden: `(DP\d{5})`/', $update["callback_query"]["message"]["caption"], $matches);
-$uniqueId = $matches[1] ?? "Desconocido";  // Usar el número de orden
-
-preg_match('/💰 Monto: `([^`]+)`/', $update["callback_query"]["message"]["caption"], $montoMatches);
-$monto = $montoMatches[1] ?? "Desconocido";  // Usar el monto del mensaje
+// Generación del número de orden aleatorio
+$uniqueId = "DP" . str_pad(rand(0, 99999), 5, "0", STR_PAD_LEFT);
 
 // Datos del cliente
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
@@ -59,12 +55,11 @@ if ($responseDelete === false || $http_status != 200) {
     exit;
 }
 
-// Enviar un nuevo mensaje con la información actualizada, incluyendo el monto
+// Enviar un nuevo mensaje con la información actualizada
 $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
 $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
               "👤 Administrador: $adminName\n" .
               "📅 Fecha de acción: $fechaAccion\n" .
-              "💰 Monto: $monto\n" .
               "$accionTexto";
 
 $postDataSend = [
@@ -89,9 +84,6 @@ file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: "
 if ($responseSend === false || $http_status != 200) {
     file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
 }
-
-exit;
-?>
 
 exit;
 ?>
