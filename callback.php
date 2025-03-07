@@ -1,99 +1,57 @@
 <?php
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";  // Token del bot
+require_once 'utils/config.php';
+require_once 'utils/whatsapp.php';
+require_once 'utils/mensajes.php';
+
+date_default_timezone_set('America/La_Paz');
 
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
-file_put_contents("callback_log.txt", "📌 Callback recibido: " . json_encode($update, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+$callbackData = $update["callback_query"]["data"] ?? '';
+$chatId = $update["callback_query"]["message"]["chat"]["id"] ?? '';
+$messageId = $update["callback_query"]["message"]["message_id"] ?? '';
+$messageText = $update["callback_query"]["message"]["caption"] ?? '';
 
-if (!$update || !isset($update["callback_query"])) {
-    file_put_contents("callback_log.txt", "❌ Error: No hay callback_query en la solicitud.\n", FILE_APPEND);
-    exit;
+preg_match('/(completado|rechazado)-(DP\\d{4})-(.*?)-(\\d{1,12})/', $callbackData, $matches);
+$accion = $matches[1] ?? '';
+$uniqueId = $matches[2] ?? '';
+$monto = $matches[3] ?? '';
+$docNumber = $matches[4] ?? '';
+
+preg_match('/📱 Teléfono: (\\d{8,12})/', $messageText, $phoneMatch);
+$fullPhoneNumber = $phoneMatch[1] ?? '';
+
+$adminName = $update["callback_query"]["from"]["first_name"] ?? "Administrador";
+if (isset($update["callback_query"]["from"]["username"])) {
+    $adminName .= " (@" . $update["callback_query"]["from"]["username"] . ")";
 }
 
-$callbackData = $update["callback_query"]["data"];
-$chatId = $update["callback_query"]["message"]["chat"]["id"];
-$messageId = $update["callback_query"]["message"]["message_id"];
-$user = $update["callback_query"]["from"];
-
-// Extraer datos del callback_data
-preg_match('/(completado|rechazado)-(DP\d{4})-(.*?)-(\d{1,12})/', $callbackData, $matches);
-if (!$matches) {
-    file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
-    exit;
-}
-
-$accion = $matches[1];  // "completado" o "rechazado"
-$uniqueId = $matches[2];  // El uniqueId generado en procesar.php
-$monto = $matches[3];  // El monto enviado desde procesar.php
-$docNumber = $matches[4];  // El numero de documento procesar.php
-
-// Obtener nombre del usuario
-$adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
-if (isset($user["username"])) {
-    $adminName .= " (@" . $user["username"] . ")";
-}
-
-// Acción tomada
-$accionTexto = ($accion === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
+$accionTexto = $accion === "completado" ? "✅ COMPLETADO" : "❌ RECHAZADO";
 $fechaAccion = date('Y-m-d H:i:s');
 
-// Eliminar el mensaje original
-$urlDelete = "https://api.telegram.org/bot$TOKEN/deleteMessage";
-$postDataDelete = [
+file_get_contents("https://api.telegram.org/bot" . TELEGRAM_TOKEN . "/deleteMessage?" . http_build_query([
     "chat_id" => $chatId,
     "message_id" => $messageId
-];
+]));
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $urlDelete);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $postDataDelete);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-$responseDelete = curl_exec($ch);
-$curl_error = curl_error($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-file_put_contents("callback_log.txt", "📌 Respuesta de borrar mensaje: " . $responseDelete . "\n", FILE_APPEND);
-
-if ($responseDelete === false || $http_status != 200) {
-    file_put_contents("callback_log.txt", "❌ Error al borrar el mensaje: $curl_error\n", FILE_APPEND);
-    exit;
-}
-
-// Enviar un nuevo mensaje con la información actualizada
-$url = "https://api.telegram.org/bot$TOKEN/sendMessage";
 $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
               "👤 Administrador: $adminName\n" .
               "📅 Fecha de acción: $fechaAccion\n" .
               "🪪 Documento: $docNumber\n" .
-              "💰 Monto: $monto\n" .  // Aquí agregamos el monto
+              "📱 Teléfono: `$fullPhoneNumber`\n" .
+              "💰 Monto: $monto BOB\n" .
               "$accionTexto";
 
-$postDataSend = [
+file_get_contents("https://api.telegram.org/bot" . TELEGRAM_TOKEN . "/sendMessage?" . http_build_query([
     "chat_id" => $chatId,
     "text" => $nuevoTexto,
     "parse_mode" => "Markdown"
-];
+]));
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $postDataSend);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-$responseSend = curl_exec($ch);
-$curl_error = curl_error($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: " . $responseSend . "\n", FILE_APPEND);
-
-if ($responseSend === false || $http_status != 200) {
-    file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
+if ($accion === "completado") {
+    sendWhatsApp($fullPhoneNumber, mensajeCompletado());
+} else {
+    sendWhatsApp($fullPhoneNumber, mensajeRechazado());
 }
-
-exit;
 ?>
