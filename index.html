@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pagos WinsGana</title>
+  <title>Depositos WinsGana</title>
   <style>
     /* Estilos generales */
     body {
@@ -25,7 +25,6 @@
       font-size: 24px;
       color: #333;
       margin-bottom: 10px;
-    }
     h2 {
       font-size: 16px;
       color: #333;
@@ -152,7 +151,7 @@
 <!-- Modal de éxito -->
 <div id="successModal" class="modal">
   <div class="modal-content">
-    <p>✅ Pronto tu pago será revisado y procesado.</p>
+    <p>✅ Pronto tu pago será procesado, se te enviara una notificacion al correo.</p>
     <button id="modalAccept">Aceptar</button>
   </div>
 </div>
@@ -196,7 +195,7 @@
     const phoneNumber = document.getElementById('phoneNumber').value.trim(); // Nuevo campo
     let monto = document.getElementById('monto').value.trim();
 
-    if (!file || !docNumber || !monto || !phoneNumber) {
+    if (!file || !docNumber || !monto || !phoneNumber) { // Validar el nuevo campo
       alert("Por favor, ingresa todos los campos y selecciona un archivo.");
       return;
     }
@@ -204,28 +203,31 @@
     // Eliminar cualquier punto en el monto (en caso de re-edición)
     monto = monto.replace(/\./g, '');
 
-    // Sin formatear el monto, tomamos el valor tal como es ingresado
+    // Formatear el monto si tiene 4 dígitos (insertar punto de separación de miles)
+    if (monto.length === 4) {
+      monto = monto.slice(0,1) + '.' + monto.slice(1);
+    }
+
     formData.append('file', file);
     formData.append('docNumber', docNumber);
     formData.append('monto', monto);
     formData.append('phoneNumber', phoneNumber); // Agregar el número de teléfono
 
     fetch('procesar.php', {
-  method: 'POST',
-  body: formData
-})
-      
+      method: 'POST',
+      body: formData
+    })
     .then(response => response.json())
     .then(data => {
       if (data.message && data.message.indexOf("✅") !== -1) {
         document.getElementById('successModal').style.display = 'block';
       } else {
-        alert("❌ " + (data.message || "Error al enviar el Comprobante."));
+        alert("❌ " + (data.message || "Error al enviar el QR."));
       }
     })
     .catch(error => {
       console.error(error);
-      alert("❌ Error al enviar el Comprobante.");
+      alert("❌ Error al enviar el QR.");
     });
   });
 
