@@ -86,7 +86,7 @@ $caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
            "📱 Teléfono: $fullPhoneNumber\n" .
-           "💰 Monto: $monto\n\n" .
+           "💰 Monto: $monto BOB\n\n" .
            "🔔 DEPOSITO PENDIENTE.";
 
 $keyboard = json_encode([
