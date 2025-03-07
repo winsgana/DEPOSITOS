@@ -210,7 +210,7 @@
     formData.append('monto', monto);
     formData.append('phoneNumber', phoneNumber); // Agregar el número de teléfono
 
-    fetch('https://depositos.onrender.com/procesar.php', {
+    fetch('procesar.php', {
   method: 'POST',
   body: formData
 })
