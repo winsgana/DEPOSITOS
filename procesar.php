@@ -1,12 +1,13 @@
 <?php
 date_default_timezone_set('America/La_Paz');
 
+// Credenciales dentro de procesar.php
+define("TELEGRAM_TOKEN", "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI");
+define("TELEGRAM_CHAT_ID", "-4633546693");
+define("API_KEY", "6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731");
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
-
-require_once 'utils/config.php';
-require_once 'utils/whatsapp.php';
-require_once 'utils/mensajes.php';
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
@@ -42,11 +43,11 @@ $nombreArchivo = $_FILES["file"]["name"];
 $rutaTemporal = $_FILES["file"]["tmp_name"];
 $fecha = date('Y-m-d H:i:s');
 
-$caption = "🆔 Número de Orden: `$uniqueId`\n" .
-           "📅 Fecha de carga: $fecha\n" .
-           "🪪 Documento: $docNumber\n" .
-           "📱 Teléfono: $fullPhoneNumber\n" .
-           "💰 Monto: $monto BOB\n\n" .
+$caption = "🆔 Número de Orden: `$uniqueId`\n" . 
+           "📅 Fecha de carga: $fecha\n" . 
+           "🪪 Documento: $docNumber\n" . 
+           "📱 Teléfono: $fullPhoneNumber\n" . 
+           "💰 Monto: $monto BOB\n\n" . 
            "🔔 Por favor, Realizar el pago.";
 
 $keyboard = json_encode([
@@ -71,6 +72,19 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 curl_close($ch);
 
-sendWhatsApp($fullPhoneNumber, mensajeRecepcion($fecha, $monto));
+// Enviar mensaje a WhatsApp
+$whatsappMessage = "✅ Su solicitud ha sido recibida. Fecha: $fecha, Monto: $monto BOB";
+sendWhatsApp($fullPhoneNumber, $whatsappMessage);
+
 echo json_encode(["message" => "✅ Comprobante enviado"]);
+
+function sendWhatsApp($phoneNumber, $message) {
+    $url = "https://api.smsmobileapi.com/sendsms/?" . http_build_query([
+        "recipients" => $phoneNumber,
+        "message" => rawurlencode($message),
+        "apikey" => API_KEY,
+        "waonly" => "yes"
+    ]);
+    file_get_contents($url); // Enviar el mensaje a WhatsApp
+}
 ?>
