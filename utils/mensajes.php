@@ -1,21 +1,28 @@
 <?php
 function mensajeRecepcion($fecha, $monto) {
-    return "✅ Su solicitud ha sido recibida\n\n" .
+    return "✅ ¡Recibimos tu solicitud de Depósito!\n" .
            "🗓 Fecha: $fecha\n" .
            "💰 Monto: $monto BOB\n\n" .
-           "🔔 Te notificaremos cuando esté procesada.";
+           "🔔 Estamos revisando tu solicitud. No te preocupes,
+               te notificaremos una vez que esté completada.\n\n" .
+           "🔔 Recuerda: este es un canal de notificaciones automáticas.";
 }
 
 function mensajeCompletado() {
-    return "¡Es oficial! ✅ Tu solicitud está completamente lista.\n\n" .
-           "Gracias por ser parte de Winsgana, donde cada jugada cuenta y cada momento puede ser épico.\n\n" .
-           "🔥 Te deseamos la mejor de las suertes, porque la suerte premia a los valientes.\n\n" .
+    return "¡Es oficial! Tu solicitud ha sido aprobada.\n\n" .
+           "Tu saldo ya está disponible, ¡prepárate para jugar!
+            En WinsGana, la suerte está de tu lado,
+            porque solo los valientes son los premiados.\n\n" .
            "🔔 Recuerda: este es un canal de notificaciones automáticas.";
 }
 
 function mensajeRechazado() {
-    return "⚠️ Tu solicitud fue rechazada.\n\n" .
-           "Si crees que esto fue un error, puedes comunicarte con nuestro equipo de soporte para ayudarte.\n\n" .
+    return "⚠️ Tu solicitud no pudo ser aprobada.\n\n" .
+           "Por favor, verifica que tus datos coincidan
+            y que tu cuenta en Winsgana esté verificada.\n" .
+           "📞 Contáctanos para más información:\n" .
+           "📱 WhatsApp: +59162162190\n" .
+           "📧 Correo: soporte@winsgana.com\n\n" .
            "🔔 Recuerda: este es un canal de notificaciones automáticas.";
 }
 ?>
