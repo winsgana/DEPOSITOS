@@ -31,7 +31,7 @@ $lastUniqueId = file_exists($uniqueIdFile) ? (int)file_get_contents($uniqueIdFil
 $newUniqueId = $lastUniqueId + 1;
 file_put_contents($uniqueIdFile, $newUniqueId);
 
-$uniqueId = "RT" . str_pad($newUniqueId, 4, "0", STR_PAD_LEFT);
+$uniqueId = "DP" . str_pad($newUniqueId, 4, "0", STR_PAD_LEFT);
 
 $docNumber = substr(trim($_POST['docNumber'] ?? ''), 0, 12);
 $phoneNumber = preg_replace('/\D/', '', $_POST["phoneNumber"] ?? '');
@@ -47,7 +47,7 @@ $caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "🪪 Documento: $docNumber\n" .
            "📱 Teléfono: $fullPhoneNumber\n" .
            "💰 Monto: $monto BOB\n\n" .
-           "🔔 Por favor, Realizar el pago.";
+           "🔔 Por favor, Verificar el pago.";
 
 $keyboard = json_encode([
     "inline_keyboard" => [
