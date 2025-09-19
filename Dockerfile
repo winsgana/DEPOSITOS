@@ -1,14 +1,15 @@
-# Usa la imagen oficial de PHP con Apache
-FROM php:8.0-apache
+# Imagen oficial de Python
+FROM python:3.11-slim
 
-# Copia todos los archivos del proyecto al directorio de Apache
-COPY . /var/www/html/
+# Establece directorio de trabajo
+WORKDIR /app
 
-# Asigna los permisos adecuados a los archivos
-RUN chown -R www-data:www-data /var/www/html
+# Copia tus archivos (script y requirements)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Expone el puerto 80 para acceder a la aplicación
-EXPOSE 80
+COPY . .
 
-# Arranca Apache en primer plano
-CMD ["apache2-foreground"]
+# Si es worker, arranca tu script Python directamente
+CMD ["python", "leer_bancolombia.py"]
+
