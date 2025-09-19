@@ -1,62 +1,69 @@
-import os
-import imaplib, email, re, requests
+import os, imaplib, email, re, json, requests
 
 IMAP_SERVER = os.environ['IMAP_SERVER']
-IMAP_USER   = os.environ['IMAP_USER']
-IMAP_PASS   = os.environ['IMAP_PASS']
+IMAP_USER = os.environ['IMAP_USER']
+IMAP_PASS = os.environ['IMAP_PASS']
+FROM_EMAIL = os.environ['FROM_EMAIL']
 GOOGLE_SHEET_URL = os.environ['GOOGLE_SHEET_URL']
 
-FROM_EMAIL  = 'alertasynotificaciones@notificacionesbancolombia.com'
+# Regex
+re_monto = re.compile(r'Recibiste\s*\$([\d.,]+)')
+re_nombre = re.compile(r'por QR de (.*?) en tu cuenta')
+re_fecha = re.compile(r'el\s+(\d{4}/\d{2}/\d{2})')
+re_hora = re.compile(r'a las\s+(\d{2}:\d{2})')
 
-def get_bancolombia_emails():
+def get_existing_keys():
+    # Pides las claves existentes al WebApp de Apps Script
+    r = requests.get(GOOGLE_SHEET_URL + "?action=get_keys")
+    if r.status_code == 200:
+        return set(r.json())  # debe devolver lista de claves
+    return set()
+
+def add_to_sheet(monto, nombre, fecha, hora, clave):
+    data = {"monto": monto, "nombre": nombre, "fecha": fecha, "hora": hora, "clave": clave}
+    requests.post(GOOGLE_SHEET_URL, json=data)
+
+def main():
+    existing_keys = get_existing_keys()
+
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
     mail.login(IMAP_USER, IMAP_PASS)
     mail.select("inbox")
 
-    status, data = mail.search(None, f'(FROM "{FROM_EMAIL}")')
-    mail_ids = data[0].split()
+    # Solo correos nuevos del remitente
+    status, data = mail.search(None, f'(UNSEEN FROM "{FROM_EMAIL}")')
+    for num in data[0].split():
+        status, msg_data = mail.fetch(num, '(RFC822)')
+        msg = email.message_from_bytes(msg_data[0][1])
 
-    for num in mail_ids[-5:]:  # últimos 5 correos
-        status, data = mail.fetch(num, '(RFC822)')
-        raw_email = data[0][1]
-        msg = email.message_from_bytes(raw_email)
-
-        body = ""
         if msg.is_multipart():
             for part in msg.walk():
-                if part.get_content_type() == 'text/plain':
-                    body += part.get_payload(decode=True).decode(errors='ignore')
+                if part.get_content_type() == "text/plain":
+                    body = part.get_payload(decode=True).decode()
+                    break
         else:
-            body = msg.get_payload(decode=True).decode(errors='ignore')
+            body = msg.get_payload(decode=True).decode()
 
-        # Extraer datos
-        monto = re.search(r'Recibiste\s*\$([\d.,]+)', body)
+        monto = re_monto.search(body)
+        nombre = re_nombre.search(body)
+        fecha = re_fecha.search(body)
+        hora = re_hora.search(body)
+
         monto = monto.group(1) if monto else ''
-
-        nombre = re.search(r'por QR de (.*?) en tu cuenta', body)
         nombre = nombre.group(1) if nombre else ''
-
-        fecha = re.search(r'el\s+(\d{4}/\d{2}/\d{2})', body)
         fecha = fecha.group(1) if fecha else ''
-
-        hora = re.search(r'a las\s+(\d{1,2}:\d{2})', body)
         hora = hora.group(1) if hora else ''
 
-        # Enviar a Google Sheets
-        payload = {
-            "monto": monto,
-            "nombre": nombre,
-            "fecha": fecha,
-            "hora": hora
-        }
-        try:
-            r = requests.post(GOOGLE_SHEET_URL, json=payload)
-            print("Respuesta Sheets:", r.text)
-        except Exception as e:
-            print("Error enviando a Sheets:", e)
+        clave = f"{monto}|{nombre}|{fecha}|{hora}"
+
+        if clave and clave not in existing_keys:
+            add_to_sheet(monto, nombre, fecha, hora, clave)
+            existing_keys.add(clave)
+
+        # Marcar como leído
+        mail.store(num, '+FLAGS', '\\Seen')
 
     mail.logout()
 
 if __name__ == "__main__":
-    get_bancolombia_emails()
-
+    main()
