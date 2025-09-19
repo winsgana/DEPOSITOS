@@ -1,4 +1,4 @@
-import os, imaplib, email, re, json, requests
+import os, imaplib, email, re, requests
 
 IMAP_SERVER = os.environ['IMAP_SERVER']
 IMAP_USER = os.environ['IMAP_USER']
@@ -12,25 +12,21 @@ re_nombre = re.compile(r'por QR de (.*?) en tu cuenta')
 re_fecha = re.compile(r'el\s+(\d{4}/\d{2}/\d{2})')
 re_hora = re.compile(r'a las\s+(\d{2}:\d{2})')
 
-def get_existing_keys():
-    # Pides las claves existentes al WebApp de Apps Script
-    r = requests.get(GOOGLE_SHEET_URL + "?action=get_keys")
-    if r.status_code == 200:
-        return set(r.json())  # debe devolver lista de claves
-    return set()
-
-def add_to_sheet(monto, nombre, fecha, hora, clave):
-    data = {"monto": monto, "nombre": nombre, "fecha": fecha, "hora": hora, "clave": clave}
-    requests.post(GOOGLE_SHEET_URL, json=data)
+def add_to_sheet(monto, nombre, fecha, hora):
+    data = {
+        "monto": monto,
+        "nombre": nombre,
+        "fecha": fecha,
+        "hora": hora
+    }
+    r = requests.post(GOOGLE_SHEET_URL, json=data)
+    print(r.text)  # para ver respuesta del Apps Script
 
 def main():
-    existing_keys = get_existing_keys()
-
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
     mail.login(IMAP_USER, IMAP_PASS)
     mail.select("inbox")
 
-    # Solo correos nuevos del remitente
     status, data = mail.search(None, f'(UNSEEN FROM "{FROM_EMAIL}")')
     for num in data[0].split():
         status, msg_data = mail.fetch(num, '(RFC822)')
@@ -54,16 +50,14 @@ def main():
         fecha = fecha.group(1) if fecha else ''
         hora = hora.group(1) if hora else ''
 
-        clave = f"{monto}|{nombre}|{fecha}|{hora}"
+        # enviar directamente a la hoja
+        add_to_sheet(monto, nombre, fecha, hora)
 
-        if clave and clave not in existing_keys:
-            add_to_sheet(monto, nombre, fecha, hora, clave)
-            existing_keys.add(clave)
-
-        # Marcar como leído
+        # marcar leído
         mail.store(num, '+FLAGS', '\\Seen')
 
     mail.logout()
 
 if __name__ == "__main__":
     main()
+
