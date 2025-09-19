@@ -1,0 +1,4 @@
+gspread==6.7.2
+google-auth==2.20.0
+beautifulsoup4==4.12.2
+lxml==4.9.3
